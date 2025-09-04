@@ -52,6 +52,26 @@ const CertificateLibraryPage = () => {
     const fetchCertificates = async () => {
         try {
             setLoading(true);
+
+            // If no filters are applied, get AI recommendations
+            if (!searchTerm && !selectedCategory && !selectedDifficulty) {
+                try {
+                    const response = await axios.get('/api/ai/recommendations/certificates');
+                    setCertificates(response.data.certificates);
+                    setPagination({
+                        current: 1,
+                        pages: 1,
+                        total: response.data.recommendedCount,
+                        hasNext: false,
+                        hasPrev: false
+                    });
+                    return;
+                } catch (aiError) {
+                    console.log('AI recommendations failed, falling back to all certificates:', aiError);
+                }
+            }
+
+            // Fallback to regular certificate fetching with filters
             const params = new URLSearchParams({
                 page: pagination.current,
                 limit: 12
@@ -134,7 +154,10 @@ const CertificateLibraryPage = () => {
                         Certificate Library
                     </h1>
                     <p className={styles.certificateSubtitle}>
-                        Discover industry-recognized certifications to advance your career
+                        {!searchTerm && !selectedCategory && !selectedDifficulty ?
+                            "AI-powered recommendations based on your profile and career goals" :
+                            "Discover industry-recognized certifications to advance your career"
+                        }
                     </p>
                 </motion.div>
 

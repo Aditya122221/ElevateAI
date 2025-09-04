@@ -289,23 +289,6 @@ router.post('/:id/submit', auth, async (req, res) => {
     }
 });
 
-// @route   GET /api/tests/:id/results
-// @desc    Get user's test results
-// @access  Private
-router.get('/:id/results', auth, async (req, res) => {
-    try {
-        const results = await TestResult.find({
-            user: req.user.id,
-            test: req.params.id
-        }).sort({ completedAt: -1 });
-
-        res.json({ results });
-    } catch (error) {
-        console.error('Test results fetch error:', error);
-        res.status(500).json({ message: 'Server error while fetching test results' });
-    }
-});
-
 // @route   GET /api/tests/user/results
 // @desc    Get all user's test results
 // @access  Private
@@ -319,6 +302,23 @@ router.get('/user/results', auth, async (req, res) => {
     } catch (error) {
         console.error('User test results fetch error:', error);
         res.status(500).json({ message: 'Server error while fetching user test results' });
+    }
+});
+
+// @route   GET /api/tests/:id/results
+// @desc    Get user's test results for a specific test
+// @access  Private
+router.get('/:id/results', auth, async (req, res) => {
+    try {
+        const results = await TestResult.find({
+            user: req.user.id,
+            test: req.params.id
+        }).sort({ completedAt: -1 });
+
+        res.json({ results });
+    } catch (error) {
+        console.error('Test results fetch error:', error);
+        res.status(500).json({ message: 'Server error while fetching test results' });
     }
 });
 

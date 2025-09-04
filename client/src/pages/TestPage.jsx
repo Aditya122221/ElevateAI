@@ -55,6 +55,29 @@ const TestPage = () => {
     const fetchTests = async () => {
         try {
             setLoading(true);
+
+            // If no filters are applied, try to get AI recommendations first
+            if (!searchTerm && !selectedCategory && !selectedDifficulty) {
+                try {
+                    const response = await axios.get('/api/ai/recommendations/tests');
+                    if (response.data.tests && response.data.tests.length > 0) {
+                        setTests(response.data.tests);
+                        setPagination({
+                            current: 1,
+                            pages: 1,
+                            total: response.data.recommendedCount || response.data.tests.length,
+                            hasNext: false,
+                            hasPrev: false
+                        });
+                        return;
+                    }
+                } catch (aiError) {
+                    console.log('AI recommendations failed, falling back to all tests:', aiError);
+                    console.log('AI Error details:', aiError.response?.data || aiError.message);
+                }
+            }
+
+            // Fallback to regular test fetching with filters
             const params = new URLSearchParams({
                 page: pagination.current,
                 limit: 12
@@ -65,10 +88,25 @@ const TestPage = () => {
             if (selectedDifficulty) params.append('difficulty', selectedDifficulty);
 
             const response = await axios.get(`/api/tests?${params}`);
-            setTests(response.data.tests);
-            setPagination(response.data.pagination);
+            console.log('Regular test fetch response:', response.data);
+            setTests(response.data.tests || []);
+            setPagination(response.data.pagination || {
+                current: 1,
+                pages: 1,
+                total: response.data.tests?.length || 0,
+                hasNext: false,
+                hasPrev: false
+            });
         } catch (error) {
             console.error('Error fetching tests:', error);
+            setTests([]);
+            setPagination({
+                current: 1,
+                pages: 1,
+                total: 0,
+                hasNext: false,
+                hasPrev: false
+            });
         } finally {
             setLoading(false);
         }
@@ -138,7 +176,10 @@ const TestPage = () => {
                         Skill Assessment Tests
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400">
-                        Test your knowledge and skills with our comprehensive assessments
+                        {!searchTerm && !selectedCategory && !selectedDifficulty ?
+                            "AI-recommended tests based on your skills and career goals" :
+                            "Test your knowledge and skills with our comprehensive assessments"
+                        }
                     </p>
                 </motion.div>
 
