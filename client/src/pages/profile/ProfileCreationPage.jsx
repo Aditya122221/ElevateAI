@@ -139,7 +139,11 @@ const ProfileCreationPage = () => {
             };
 
             await axios.post('/api/profile', profileData);
-            updateUser({ ...user, isProfileComplete: true });
+
+            // Refresh user data from server to get updated profile completion status
+            const userResponse = await axios.get('/api/auth/me');
+            updateUser(userResponse.data.user);
+
             toast.success('Profile created successfully!');
             navigate('/dashboard');
         } catch (error) {

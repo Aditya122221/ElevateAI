@@ -1029,16 +1029,26 @@ a:hover {
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: var(--gray-900);
-    --bg-secondary: var(--gray-800);
-    --bg-tertiary: var(--gray-700);
-    --bg-card: var(--gray-800);
-    --text-primary: var(--white);
-    --text-secondary: var(--gray-300);
-    --text-tertiary: var(--gray-400);
-    --border-color: var(--gray-700);
-    --border-hover: var(--gray-600);
-  }
+[data-theme="dark"] {
+  --bg-primary: var(--gray-900);
+  --bg-secondary: var(--gray-800);
+  --bg-tertiary: var(--gray-700);
+  --bg-card: var(--gray-800);
+  --text-primary: var(--white);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --text-muted: var(--gray-400);
+  --border-color: var(--gray-700);
+  --border-hover: var(--gray-600);
+}
+
+/* Dark mode body background */
+[data-theme="dark"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Dark mode transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }

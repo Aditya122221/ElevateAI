@@ -93,7 +93,7 @@ const Navbar = () => {
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="btn btn-ghost btn-sm"
+                        className={styles.themeToggle}
                         aria-label="Toggle theme"
                     >
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}

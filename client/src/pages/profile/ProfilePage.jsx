@@ -501,19 +501,76 @@ const ProfilePage = () => {
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                             Technical Skills
                                         </h3>
-                                        {profile.skills?.technical && profile.skills.technical.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {profile.skills.technical.map((skill, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                                        {editing ? (
+                                            <div className="space-y-3">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add technical skill"
+                                                        className="form-input flex-1"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const skill = e.target.value.trim();
+                                                                if (skill) {
+                                                                    const newSkills = [...(formData.skills?.technical || []), { name: skill, level: 'intermediate' }];
+                                                                    handleNestedInputChange('skills', 'technical', newSkills);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={(e) => {
+                                                            const input = e.target.previousElementSibling;
+                                                            const skill = input.value.trim();
+                                                            if (skill) {
+                                                                const newSkills = [...(formData.skills?.technical || []), { name: skill, level: 'intermediate' }];
+                                                                handleNestedInputChange('skills', 'technical', newSkills);
+                                                                input.value = '';
+                                                            }
+                                                        }}
                                                     >
-                                                        {skill.name} ({skill.level})
-                                                    </span>
-                                                ))}
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {formData.skills?.technical?.map((skill, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-2"
+                                                        >
+                                                            {skill.name} ({skill.level})
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newSkills = formData.skills.technical.filter((_, i) => i !== index);
+                                                                    handleNestedInputChange('skills', 'technical', newSkills);
+                                                                }}
+                                                                className="text-primary hover:text-primary-dark"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         ) : (
-                                            <p className="text-gray-600 dark:text-gray-400">No technical skills added yet</p>
+                                            profile.skills?.technical && profile.skills.technical.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {profile.skills.technical.map((skill, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                                                        >
+                                                            {skill.name} ({skill.level})
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-400">No technical skills added yet</p>
+                                            )
                                         )}
                                     </div>
 
@@ -522,19 +579,76 @@ const ProfilePage = () => {
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                             Soft Skills
                                         </h3>
-                                        {profile.skills?.soft && profile.skills.soft.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {profile.skills.soft.map((skill, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm"
+                                        {editing ? (
+                                            <div className="space-y-3">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add soft skill"
+                                                        className="form-input flex-1"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const skill = e.target.value.trim();
+                                                                if (skill) {
+                                                                    const newSkills = [...(formData.skills?.soft || []), { name: skill, level: 'intermediate' }];
+                                                                    handleNestedInputChange('skills', 'soft', newSkills);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={(e) => {
+                                                            const input = e.target.previousElementSibling;
+                                                            const skill = input.value.trim();
+                                                            if (skill) {
+                                                                const newSkills = [...(formData.skills?.soft || []), { name: skill, level: 'intermediate' }];
+                                                                handleNestedInputChange('skills', 'soft', newSkills);
+                                                                input.value = '';
+                                                            }
+                                                        }}
                                                     >
-                                                        {skill.name} ({skill.level})
-                                                    </span>
-                                                ))}
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {formData.skills?.soft?.map((skill, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm flex items-center gap-2"
+                                                        >
+                                                            {skill.name} ({skill.level})
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newSkills = formData.skills.soft.filter((_, i) => i !== index);
+                                                                    handleNestedInputChange('skills', 'soft', newSkills);
+                                                                }}
+                                                                className="text-secondary hover:text-secondary-dark"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         ) : (
-                                            <p className="text-gray-600 dark:text-gray-400">No soft skills added yet</p>
+                                            profile.skills?.soft && profile.skills.soft.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {profile.skills.soft.map((skill, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm"
+                                                        >
+                                                            {skill.name} ({skill.level})
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-400">No soft skills added yet</p>
+                                            )
                                         )}
                                     </div>
 
@@ -543,19 +657,76 @@ const ProfilePage = () => {
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                             Interests
                                         </h3>
-                                        {profile.interests && profile.interests.length > 0 ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {profile.interests.map((interest, index) => (
-                                                    <span
-                                                        key={index}
-                                                        className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"
+                                        {editing ? (
+                                            <div className="space-y-3">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add interest"
+                                                        className="form-input flex-1"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const interest = e.target.value.trim();
+                                                                if (interest) {
+                                                                    const newInterests = [...(formData.interests || []), interest];
+                                                                    handleInputChange('interests', newInterests);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={(e) => {
+                                                            const input = e.target.previousElementSibling;
+                                                            const interest = input.value.trim();
+                                                            if (interest) {
+                                                                const newInterests = [...(formData.interests || []), interest];
+                                                                handleInputChange('interests', newInterests);
+                                                                input.value = '';
+                                                            }
+                                                        }}
                                                     >
-                                                        {interest}
-                                                    </span>
-                                                ))}
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {formData.interests?.map((interest, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-2"
+                                                        >
+                                                            {interest}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newInterests = formData.interests.filter((_, i) => i !== index);
+                                                                    handleInputChange('interests', newInterests);
+                                                                }}
+                                                                className="text-accent hover:text-accent-dark"
+                                                            >
+                                                                <X size={14} />
+                                                            </button>
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         ) : (
-                                            <p className="text-gray-600 dark:text-gray-400">No interests added yet</p>
+                                            profile.interests && profile.interests.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {profile.interests.map((interest, index) => (
+                                                        <span
+                                                            key={index}
+                                                            className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"
+                                                        >
+                                                            {interest}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-400">No interests added yet</p>
+                                            )
                                         )}
                                     </div>
                                 </div>
@@ -573,17 +744,72 @@ const ProfilePage = () => {
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                             Short-term Goals (next 6 months)
                                         </h3>
-                                        {profile.goals?.shortTerm && profile.goals.shortTerm.length > 0 ? (
-                                            <ul className="space-y-2">
-                                                {profile.goals.shortTerm.map((goal, index) => (
-                                                    <li key={index} className="flex items-center text-gray-600 dark:text-gray-400">
-                                                        <Target className="w-4 h-4 text-primary mr-2" />
-                                                        {goal}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                        {editing ? (
+                                            <div className="space-y-3">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add short-term goal"
+                                                        className="form-input flex-1"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const goal = e.target.value.trim();
+                                                                if (goal) {
+                                                                    const newGoals = [...(formData.goals?.shortTerm || []), goal];
+                                                                    handleNestedInputChange('goals', 'shortTerm', newGoals);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={(e) => {
+                                                            const input = e.target.previousElementSibling;
+                                                            const goal = input.value.trim();
+                                                            if (goal) {
+                                                                const newGoals = [...(formData.goals?.shortTerm || []), goal];
+                                                                handleNestedInputChange('goals', 'shortTerm', newGoals);
+                                                                input.value = '';
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {formData.goals?.shortTerm?.map((goal, index) => (
+                                                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                                            <Target className="w-4 h-4 text-primary flex-shrink-0" />
+                                                            <span className="flex-1 text-gray-900 dark:text-white">{goal}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newGoals = formData.goals.shortTerm.filter((_, i) => i !== index);
+                                                                    handleNestedInputChange('goals', 'shortTerm', newGoals);
+                                                                }}
+                                                                className="text-gray-400 hover:text-red-500"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <p className="text-gray-600 dark:text-gray-400">No short-term goals set yet</p>
+                                            profile.goals?.shortTerm && profile.goals.shortTerm.length > 0 ? (
+                                                <ul className="space-y-2">
+                                                    {profile.goals.shortTerm.map((goal, index) => (
+                                                        <li key={index} className="flex items-center text-gray-600 dark:text-gray-400">
+                                                            <Target className="w-4 h-4 text-primary mr-2" />
+                                                            {goal}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-400">No short-term goals set yet</p>
+                                            )
                                         )}
                                     </div>
 
@@ -592,17 +818,72 @@ const ProfilePage = () => {
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                                             Long-term Goals (next 2-3 years)
                                         </h3>
-                                        {profile.goals?.longTerm && profile.goals.longTerm.length > 0 ? (
-                                            <ul className="space-y-2">
-                                                {profile.goals.longTerm.map((goal, index) => (
-                                                    <li key={index} className="flex items-center text-gray-600 dark:text-gray-400">
-                                                        <Lightbulb className="w-4 h-4 text-secondary mr-2" />
-                                                        {goal}
-                                                    </li>
-                                                ))}
-                                            </ul>
+                                        {editing ? (
+                                            <div className="space-y-3">
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Add long-term goal"
+                                                        className="form-input flex-1"
+                                                        onKeyPress={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                const goal = e.target.value.trim();
+                                                                if (goal) {
+                                                                    const newGoals = [...(formData.goals?.longTerm || []), goal];
+                                                                    handleNestedInputChange('goals', 'longTerm', newGoals);
+                                                                    e.target.value = '';
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-primary"
+                                                        onClick={(e) => {
+                                                            const input = e.target.previousElementSibling;
+                                                            const goal = input.value.trim();
+                                                            if (goal) {
+                                                                const newGoals = [...(formData.goals?.longTerm || []), goal];
+                                                                handleNestedInputChange('goals', 'longTerm', newGoals);
+                                                                input.value = '';
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {formData.goals?.longTerm?.map((goal, index) => (
+                                                        <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                                            <Lightbulb className="w-4 h-4 text-secondary flex-shrink-0" />
+                                                            <span className="flex-1 text-gray-900 dark:text-white">{goal}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newGoals = formData.goals.longTerm.filter((_, i) => i !== index);
+                                                                    handleNestedInputChange('goals', 'longTerm', newGoals);
+                                                                }}
+                                                                className="text-gray-400 hover:text-red-500"
+                                                            >
+                                                                <X size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         ) : (
-                                            <p className="text-gray-600 dark:text-gray-400">No long-term goals set yet</p>
+                                            profile.goals?.longTerm && profile.goals.longTerm.length > 0 ? (
+                                                <ul className="space-y-2">
+                                                    {profile.goals.longTerm.map((goal, index) => (
+                                                        <li key={index} className="flex items-center text-gray-600 dark:text-gray-400">
+                                                            <Lightbulb className="w-4 h-4 text-secondary mr-2" />
+                                                            {goal}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-gray-600 dark:text-gray-400">No long-term goals set yet</p>
+                                            )
                                         )}
                                     </div>
                                 </div>

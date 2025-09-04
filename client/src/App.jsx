@@ -27,7 +27,36 @@ const ProtectedRoute = ({ children }) => {
     return <LoadingSpinner />;
   }
 
-  return user ? children : <Navigate to="/login" />;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  // If user is logged in but profile is not complete, redirect to profile creation
+  if (user && !user.isProfileComplete) {
+    return <Navigate to="/profile-creation" />;
+  }
+
+  return children;
+};
+
+// Profile Creation Route (only for users with incomplete profiles)
+const ProfileCreationRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  // If user is logged in and profile is complete, redirect to dashboard
+  if (user && user.isProfileComplete) {
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 };
 
 // Public Route Component (redirect if authenticated)
@@ -38,7 +67,16 @@ const PublicRoute = ({ children }) => {
     return <LoadingSpinner />;
   }
 
-  return user ? <Navigate to="/dashboard" /> : children;
+  if (user) {
+    // If user is logged in but profile is not complete, redirect to profile creation
+    if (!user.isProfileComplete) {
+      return <Navigate to="/profile-creation" />;
+    }
+    // If user is logged in and profile is complete, redirect to dashboard
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -51,7 +89,14 @@ function App() {
             <main className="main-content">
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<LandingPage />} />
+                <Route
+                  path="/"
+                  element={
+                    <PublicRoute>
+                      <LandingPage />
+                    </PublicRoute>
+                  }
+                />
                 <Route
                   path="/login"
                   element={
@@ -69,13 +114,13 @@ function App() {
                   }
                 />
 
-                {/* Protected Routes */}
+                {/* Profile Creation Route */}
                 <Route
                   path="/profile-creation"
                   element={
-                    <ProtectedRoute>
+                    <ProfileCreationRoute>
                       <ProfileCreationPage />
-                    </ProtectedRoute>
+                    </ProfileCreationRoute>
                   }
                 />
                 <Route

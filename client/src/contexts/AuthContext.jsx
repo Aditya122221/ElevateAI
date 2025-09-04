@@ -2,6 +2,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+// Configure axios base URL
+axios.defaults.baseURL = 'http://localhost:5000';
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -32,6 +35,7 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     const response = await axios.get('/api/auth/me');
+                    console.log('User data from server:', response.data.user);
                     setUser(response.data.user);
                 } catch (error) {
                     console.error('Auth check failed:', error);
@@ -50,12 +54,14 @@ export const AuthProvider = ({ children }) => {
             const response = await axios.post('/api/auth/login', { email, password });
             const { token: newToken, user: userData } = response.data;
 
+            console.log('Login response user data:', userData);
+
             localStorage.setItem('token', newToken);
             setToken(newToken);
             setUser(userData);
 
             toast.success('Login successful!');
-            return { success: true };
+            return { success: true, user: userData };
         } catch (error) {
             const message = error.response?.data?.message || 'Login failed';
             toast.error(message);
@@ -73,7 +79,7 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
 
             toast.success('Registration successful!');
-            return { success: true };
+            return { success: true, user: userData };
         } catch (error) {
             const message = error.response?.data?.message || 'Registration failed';
             toast.error(message);
