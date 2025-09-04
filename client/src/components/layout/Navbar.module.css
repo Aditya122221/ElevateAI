@@ -1,0 +1,290 @@
+/* Navbar Styles */
+.navbar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: all var(--transition-normal);
+}
+
+.navbar.scrolled {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: var(--shadow-md);
+}
+
+.navbarContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-4);
+}
+
+.navbarBrand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: transform var(--transition-fast);
+}
+
+.navbarBrand:hover {
+    transform: scale(1.05);
+}
+
+.navbarLogo {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.navbarNav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.navbarLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    position: relative;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+}
+
+.navbarLink:hover {
+    color: var(--primary);
+    background: var(--bg-tertiary);
+}
+
+.navbarLink.active {
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.navbarLink.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+}
+
+.navbarActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.userMenu {
+    position: relative;
+}
+
+.userMenuButton {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.userMenuButton:hover {
+    background: var(--bg-tertiary);
+}
+
+.userMenuDropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: var(--space-2);
+    width: 12rem;
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-2);
+    z-index: 50;
+}
+
+.userMenuLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.userMenuLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.userMenuDivider {
+    height: 1px;
+    background: var(--border-color);
+    margin: var(--space-2) 0;
+}
+
+.userMenuButton.logout {
+    color: var(--error);
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--space-3);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.userMenuButton.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.authButtons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.mobileMenuButton {
+    display: none;
+    padding: var(--space-2);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mobileMenuButton:hover {
+    background: var(--bg-tertiary);
+}
+
+.mobileMenu {
+    display: none;
+    background: var(--white);
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-4);
+}
+
+.mobileMenuLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    margin-bottom: var(--space-2);
+}
+
+.mobileMenuLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary);
+}
+
+.mobileMenuLink.active {
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbarNav {
+        display: none;
+    }
+
+    .mobileMenuButton {
+        display: block;
+    }
+
+    .mobileMenu.open {
+        display: block;
+    }
+
+    .authButtons {
+        gap: var(--space-2);
+    }
+
+    .authButtons .btn {
+        padding: var(--space-2) var(--space-3);
+        font-size: var(--font-size-xs);
+    }
+}
+
+@media (max-width: 640px) {
+    .navbarContent {
+        padding: 0 var(--space-3);
+    }
+
+    .navbarBrand span {
+        display: none;
+    }
+
+    .authButtons {
+        flex-direction: column;
+        gap: var(--space-1);
+    }
+
+    .authButtons .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .navbar {
+        background: rgba(15, 23, 42, 0.95);
+        border-bottom-color: var(--gray-700);
+    }
+
+    .navbar.scrolled {
+        background: rgba(15, 23, 42, 0.98);
+    }
+
+    .userMenuDropdown {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+
+    .mobileMenu {
+        background: var(--gray-800);
+        border-top-color: var(--gray-700);
+    }
+}
