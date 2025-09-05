@@ -13,6 +13,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfileCreationPage from './pages/profile/ProfileCreationPage';
 import DashboardPage from './pages/DashboardPage';
 import CertificateLibraryPage from './pages/CertificateLibraryPage';
@@ -117,6 +119,22 @@ function App() {
                 <Route
                   path="/verify-email"
                   element={<EmailVerificationPage />}
+                />
+                <Route
+                  path="/forgot-password"
+                  element={
+                    <PublicRoute>
+                      <ForgotPasswordPage />
+                    </PublicRoute>
+                  }
+                />
+                <Route
+                  path="/reset-password/:token"
+                  element={
+                    <PublicRoute>
+                      <ResetPasswordPage />
+                    </PublicRoute>
+                  }
                 />
 
                 {/* Profile Creation Route */}

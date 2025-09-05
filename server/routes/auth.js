@@ -217,6 +217,76 @@ router.post('/resend-verification', [
     }
 });
 
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset
+// @access  Public
+router.post('/forgot-password', [
+    body('email').isEmail().normalizeEmail().withMessage('Please enter a valid email'),
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User with that email does not exist.' });
+        }
+
+        // Generate password reset token
+        const resetToken = user.generatePasswordResetToken();
+        await user.save();
+
+        // Send reset email
+        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+        await emailService.sendPasswordResetEmail(user.email, user.name, resetUrl);
+
+        res.json({ message: 'Password reset link sent to your email.' });
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Server error during password reset request' });
+    }
+});
+
+// @route   POST /api/auth/reset-password/:token
+// @desc    Reset user password
+// @access  Public
+router.post('/reset-password/:token', [
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { token } = req.params;
+        const { password } = req.body;
+
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired password reset token.' });
+        }
+
+        user.password = password;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        res.json({ message: 'Password has been reset successfully.' });
+    } catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Server error during password reset' });
+    }
+});
+
 // @route   POST /api/auth/logout
 // @desc    Logout user (client-side token removal)
 // @access  Private

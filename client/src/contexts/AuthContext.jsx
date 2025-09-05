@@ -111,6 +111,30 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const forgotPassword = async (email) => {
+        try {
+            const response = await axios.post('/api/auth/forgot-password', { email });
+            toast.success(response.data.message);
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Failed to send password reset email.';
+            toast.error(message);
+            return { success: false, error: message };
+        }
+    };
+
+    const resetPassword = async (token, password) => {
+        try {
+            const response = await axios.post(`/api/auth/reset-password/${token}`, { password });
+            toast.success(response.data.message);
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            const message = error.response?.data?.message || 'Failed to reset password.';
+            toast.error(message);
+            return { success: false, error: message };
+        }
+    };
+
     const updateUser = (userData) => {
         setUser(userData);
     };
@@ -121,6 +145,8 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        forgotPassword,
+        resetPassword,
         updateUser,
         isAuthenticated: !!user
     };

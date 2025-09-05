@@ -66,6 +66,34 @@ class EmailService {
     }
   }
 
+  async sendPasswordResetEmail(email, name, resetUrl) {
+    const mailOptions = {
+      from: `"ElevateAI" <${process.env.FROM_EMAIL || 'noreply@elevateai.com'}>`,
+      to: email,
+      subject: 'Password Reset Request - ElevateAI',
+      html: this.getPasswordResetEmailTemplate(name, resetUrl),
+      text: this.getPasswordResetEmailText(name, resetUrl)
+    };
+
+    try {
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log(`Password reset email sent successfully to ${email}`);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      console.log('\n=== EMAIL SENDING FAILED - PASSWORD RESET LINK ===');
+      console.log(`To: ${email}`);
+      console.log(`Subject: Password Reset Request - ElevateAI`);
+      console.log(`Reset Link: ${resetUrl}`);
+      console.log('===============================================\n');
+      return {
+        success: true,
+        messageId: 'fallback-mode',
+        warning: 'Email sending failed, reset link logged to console'
+      };
+    }
+  }
+
   getVerificationEmailTemplate(name, verificationUrl) {
     return `
       <!DOCTYPE html>
@@ -126,6 +154,72 @@ ${verificationUrl}
 Important: This verification link will expire in 24 hours for security reasons.
 
 If you didn't create an account with ElevateAI, please ignore this email.
+
+© 2024 ElevateAI. All rights reserved.
+This is an automated message, please do not reply to this email.
+    `;
+  }
+
+  getPasswordResetEmailTemplate(name, resetUrl) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset - ElevateAI</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Password Reset Request</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${name}!</h2>
+            <p>You have requested to reset your password for your ElevateAI account. Please click the button below to set a new password:</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Reset Your Password</a>
+            </div>
+            
+            <p>If the button doesn't work, you can also copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; background: #eee; padding: 10px; border-radius: 5px;">${resetUrl}</p>
+            
+            <p><strong>Important:</strong> This password reset link will expire in 1 hour for security reasons.</p>
+            
+            <p>If you did not request a password reset, please ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>© 2024 ElevateAI. All rights reserved.</p>
+            <p>This is an automated message, please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  getPasswordResetEmailText(name, resetUrl) {
+    return `
+Password Reset Request - ElevateAI
+
+Hi ${name}!
+
+You have requested to reset your password for your ElevateAI account. Please visit the following link to set a new password:
+
+${resetUrl}
+
+Important: This password reset link will expire in 1 hour for security reasons.
+
+If you did not request a password reset, please ignore this email.
 
 © 2024 ElevateAI. All rights reserved.
 This is an automated message, please do not reply to this email.
