@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Profile = require('../models/Profile');
@@ -266,8 +267,14 @@ router.post('/reset-password/:token', [
         const { token } = req.params;
         const { password } = req.body;
 
+        // Hash the token to compare with the stored hashed token
+        const hashedToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
         const user = await User.findOne({
-            passwordResetToken: token,
+            passwordResetToken: hashedToken,
             passwordResetExpires: { $gt: Date.now() },
         });
 

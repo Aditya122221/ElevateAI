@@ -1,64 +1,129 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import styles from './LoginPage.module.css'; // Reusing some styles from LoginPage
+import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { Mail, ArrowRight } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import styles from './LoginPage.module.css';
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const { forgotPassword } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError
+  } = useForm();
+
+  const onSubmit = async (data) => {
+    setIsLoading(true);
     setMessage('');
-    setError('');
 
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(data.message);
+      const result = await forgotPassword(data.email);
+      if (result.success) {
+        setMessage(result.message);
       } else {
-        setError(data.message || 'Failed to send password reset email.');
+        setError('root', { message: result.error });
       }
-    } catch (err) {
-      setError('An error occurred. Please try again later.');
-      console.error('Forgot password error:', err);
+    } catch (error) {
+      setError('root', { message: 'An unexpected error occurred' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authBox}>
-        <h2>Forgot Password</h2>
-        <form onSubmit={handleSubmit}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+    <div className={styles.loginPage}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={styles.loginContainer}
+      >
+        <div className={styles.loginCard}>
+          <div className={styles.loginHeader}>
+            <h1 className={styles.loginTitle}>Forgot Password?</h1>
+            <p className={styles.loginSubtitle}>
+              No worries! Enter your email address and we'll send you a reset link.
+            </p>
           </div>
-          <button type="submit" className={styles.authButton}>
-            Send Reset Link
-          </button>
-        </form>
-        {message && <p className={styles.successMessage}>{message}</p>}
-        {error && <p className={styles.errorMessage}>{error}</p>}
-        <p className={styles.switchAuth}>
-          Remember your password? <Link to="/login">Login</Link>
-        </p>
-      </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.loginForm}>
+            {/* Email Input */}
+            <div className={styles.inputGroup}>
+              <label htmlFor="email" className={styles.inputLabel}>
+                Email Address
+              </label>
+              <div className={styles.inputWrapper}>
+                <Mail className={styles.inputIcon} />
+                <input
+                  type="email"
+                  id="email"
+                  className={styles.input}
+                  placeholder="Enter your email"
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Please enter a valid email address'
+                    }
+                  })}
+                />
+              </div>
+              {errors.email && (
+                <span className={styles.errorText}>
+                  {errors.email.message}
+                </span>
+              )}
+            </div>
+
+            {/* Success Message */}
+            {message && (
+              <div className={styles.successMessage}>
+                <p>{message}</p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {errors.root && (
+              <div className={styles.errorMessage}>
+                <p>{errors.root.message}</p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`${styles.loginButton} ${isLoading ? styles.loading : ''}`}
+            >
+              {isLoading ? (
+                <LoadingSpinner size="small" />
+              ) : (
+                <>
+                  Send Reset Link
+                  <ArrowRight className={styles.buttonIcon} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Back to Login */}
+          <div className={styles.loginFooter}>
+            <p className={styles.switchAuth}>
+              Remember your password?{' '}
+              <Link to="/login" className={styles.switchLink}>
+                Back to Login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };

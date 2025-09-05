@@ -378,6 +378,215 @@ const certificates = [
             average: 4.1,
             count: 4500
         }
+    },
+    {
+        name: "Microsoft Azure Fundamentals (AZ-900)",
+        provider: "Microsoft",
+        description: "This certification validates your foundational knowledge of cloud services and how those services are provided with Microsoft Azure.",
+        category: "cloud-computing",
+        skills: [
+            { name: "Azure Services", level: "beginner" },
+            { name: "Cloud Computing", level: "beginner" },
+            { name: "Security", level: "beginner" },
+            { name: "Pricing", level: "beginner" }
+        ],
+        topics: [
+            "Cloud Concepts",
+            "Azure Architecture and Services",
+            "Azure Management and Governance",
+            "Azure Security",
+            "Azure Pricing and Support"
+        ],
+        duration: "85 minutes",
+        difficulty: "beginner",
+        prerequisites: [
+            "Basic understanding of cloud computing",
+            "General IT knowledge"
+        ],
+        cost: {
+            amount: 99,
+            currency: "USD",
+            free: false
+        },
+        format: ["online", "in-person"],
+        language: "English",
+        validity: "No expiration",
+        examDetails: {
+            format: "multiple-choice",
+            duration: "85 minutes",
+            passingScore: 70,
+            attempts: 5
+        },
+        benefits: [
+            "Industry-recognized certification",
+            "Foundation for advanced Azure certifications",
+            "Career advancement opportunities",
+            "Access to Microsoft learning resources"
+        ],
+        targetAudience: [
+            "IT Professionals",
+            "Students",
+            "Career Changers",
+            "Business Stakeholders"
+        ],
+        industryRecognition: "high",
+        jobRoles: [
+            "Cloud Administrator",
+            "Solutions Architect",
+            "DevOps Engineer",
+            "Cloud Consultant"
+        ],
+        averageSalary: {
+            min: 50000,
+            max: 100000,
+            currency: "USD"
+        },
+        enrollmentUrl: "https://docs.microsoft.com/en-us/learn/certifications/azure-fundamentals/",
+        officialWebsite: "https://azure.microsoft.com/",
+        rating: {
+            average: 4.3,
+            count: 8500
+        }
+    },
+    {
+        name: "Google Analytics Individual Qualification (GAIQ)",
+        provider: "Google",
+        description: "The Google Analytics Individual Qualification demonstrates your proficiency in Google Analytics and digital analytics.",
+        category: "marketing",
+        skills: [
+            { name: "Google Analytics", level: "intermediate" },
+            { name: "Digital Marketing", level: "intermediate" },
+            { name: "Data Analysis", level: "beginner" },
+            { name: "Reporting", level: "beginner" }
+        ],
+        topics: [
+            "Google Analytics Setup",
+            "Data Collection and Processing",
+            "Configuration and Administration",
+            "Conversion and Attribution",
+            "Reports, Metrics, and Dimensions"
+        ],
+        duration: "90 minutes",
+        difficulty: "intermediate",
+        prerequisites: [
+            "Basic understanding of digital marketing",
+            "Experience with Google Analytics",
+            "Knowledge of web analytics concepts"
+        ],
+        cost: {
+            amount: 0,
+            currency: "USD",
+            free: true
+        },
+        format: ["online"],
+        language: "English",
+        validity: "18 months",
+        examDetails: {
+            format: "multiple-choice",
+            duration: "90 minutes",
+            passingScore: 80,
+            attempts: 3
+        },
+        benefits: [
+            "Free certification",
+            "Industry recognition",
+            "Career advancement",
+            "Access to Google resources"
+        ],
+        targetAudience: [
+            "Digital Marketers",
+            "Analytics Professionals",
+            "Marketing Managers",
+            "Business Analysts"
+        ],
+        industryRecognition: "medium",
+        jobRoles: [
+            "Digital Marketing Specialist",
+            "Analytics Manager",
+            "Marketing Analyst",
+            "Growth Hacker"
+        ],
+        averageSalary: {
+            min: 45000,
+            max: 85000,
+            currency: "USD"
+        },
+        enrollmentUrl: "https://skillshop.exceedlms.com/student/catalog",
+        officialWebsite: "https://analytics.google.com/",
+        rating: {
+            average: 4.0,
+            count: 12000
+        }
+    },
+    {
+        name: "CompTIA Security+",
+        provider: "CompTIA",
+        description: "CompTIA Security+ is a global certification that validates the baseline skills necessary to perform core security functions and pursue an IT security career.",
+        category: "cybersecurity",
+        skills: [
+            { name: "Network Security", level: "intermediate" },
+            { name: "Threats and Vulnerabilities", level: "intermediate" },
+            { name: "Identity Management", level: "intermediate" },
+            { name: "Risk Management", level: "intermediate" }
+        ],
+        topics: [
+            "Threats, Attacks and Vulnerabilities",
+            "Architecture and Design",
+            "Implementation",
+            "Operations and Incident Response",
+            "Governance, Risk and Compliance"
+        ],
+        duration: "90 minutes",
+        difficulty: "intermediate",
+        prerequisites: [
+            "CompTIA Network+ certification recommended",
+            "2 years of IT administration experience",
+            "Basic understanding of security concepts"
+        ],
+        cost: {
+            amount: 370,
+            currency: "USD",
+            free: false
+        },
+        format: ["online", "in-person"],
+        language: "English",
+        validity: "3 years",
+        examDetails: {
+            format: "multiple-choice",
+            duration: "90 minutes",
+            passingScore: 75,
+            attempts: 3
+        },
+        benefits: [
+            "Industry-recognized certification",
+            "DoD approved",
+            "Career advancement",
+            "Foundation for advanced security certifications"
+        ],
+        targetAudience: [
+            "Security Specialists",
+            "Network Administrators",
+            "IT Auditors",
+            "Security Consultants"
+        ],
+        industryRecognition: "high",
+        jobRoles: [
+            "Security Specialist",
+            "Security Administrator",
+            "Security Analyst",
+            "IT Auditor"
+        ],
+        averageSalary: {
+            min: 55000,
+            max: 95000,
+            currency: "USD"
+        },
+        enrollmentUrl: "https://www.comptia.org/certifications/security",
+        officialWebsite: "https://www.comptia.org/",
+        rating: {
+            average: 4.2,
+            count: 15000
+        }
     }
 ];
 
@@ -619,6 +828,243 @@ const tests = [
         maxAttempts: 3,
         tags: ["Data Science", "Machine Learning", "Statistics", "Analytics"],
         skills: ["Data Science", "Machine Learning", "Statistics", "Python"]
+    },
+    {
+        title: "Cloud Computing Fundamentals",
+        description: "Test your understanding of cloud computing concepts, services, and deployment models.",
+        category: "cloud-computing",
+        difficulty: "beginner",
+        duration: 40,
+        questions: [
+            {
+                question: "What are the three main cloud service models?",
+                type: "multiple-choice",
+                options: [
+                    "Public, Private, Hybrid",
+                    "IaaS, PaaS, SaaS",
+                    "On-premise, Cloud, Edge",
+                    "Local, Regional, Global"
+                ],
+                correctAnswer: 1,
+                explanation: "The three main cloud service models are Infrastructure as a Service (IaaS), Platform as a Service (PaaS), and Software as a Service (SaaS).",
+                points: 1
+            },
+            {
+                question: "Which cloud deployment model provides the highest level of control and security?",
+                type: "multiple-choice",
+                options: [
+                    "Public Cloud",
+                    "Private Cloud",
+                    "Hybrid Cloud",
+                    "Community Cloud"
+                ],
+                correctAnswer: 1,
+                explanation: "Private cloud provides the highest level of control and security as it's dedicated to a single organization.",
+                points: 1
+            },
+            {
+                question: "What is the main advantage of cloud computing?",
+                type: "multiple-choice",
+                options: [
+                    "Lower initial costs",
+                    "Scalability and flexibility",
+                    "Better security",
+                    "Faster internet"
+                ],
+                correctAnswer: 1,
+                explanation: "The main advantage of cloud computing is scalability and flexibility, allowing resources to be scaled up or down as needed.",
+                points: 1
+            },
+            {
+                question: "Which AWS service provides virtual servers in the cloud?",
+                type: "multiple-choice",
+                options: [
+                    "S3",
+                    "EC2",
+                    "RDS",
+                    "Lambda"
+                ],
+                correctAnswer: 1,
+                explanation: "Amazon EC2 (Elastic Compute Cloud) provides virtual servers in the cloud.",
+                points: 1
+            },
+            {
+                question: "What does 'auto-scaling' mean in cloud computing?",
+                type: "multiple-choice",
+                options: [
+                    "Automatic backup",
+                    "Automatic security updates",
+                    "Automatic resource adjustment based on demand",
+                    "Automatic cost optimization"
+                ],
+                correctAnswer: 2,
+                explanation: "Auto-scaling automatically adjusts computing resources based on demand to maintain performance and optimize costs.",
+                points: 1
+            }
+        ],
+        totalPoints: 5,
+        passingScore: 60,
+        maxAttempts: 3,
+        tags: ["Cloud Computing", "AWS", "Azure", "GCP"],
+        skills: ["Cloud Computing", "AWS", "Infrastructure", "Scalability"]
+    },
+    {
+        title: "Cybersecurity Basics",
+        description: "Assess your knowledge of fundamental cybersecurity concepts and best practices.",
+        category: "cybersecurity",
+        difficulty: "beginner",
+        duration: 35,
+        questions: [
+            {
+                question: "What is the primary goal of cybersecurity?",
+                type: "multiple-choice",
+                options: [
+                    "To make systems faster",
+                    "To protect information and systems from threats",
+                    "To reduce costs",
+                    "To improve user experience"
+                ],
+                correctAnswer: 1,
+                explanation: "The primary goal of cybersecurity is to protect information and systems from threats, vulnerabilities, and attacks.",
+                points: 1
+            },
+            {
+                question: "What is a 'phishing' attack?",
+                type: "multiple-choice",
+                options: [
+                    "A physical attack on servers",
+                    "A social engineering attack using fake emails",
+                    "A type of malware",
+                    "A network intrusion"
+                ],
+                correctAnswer: 1,
+                explanation: "Phishing is a social engineering attack that uses fake emails or messages to trick users into revealing sensitive information.",
+                points: 1
+            },
+            {
+                question: "What does 'MFA' stand for in cybersecurity?",
+                type: "multiple-choice",
+                options: [
+                    "Multi-Factor Authentication",
+                    "Multiple File Access",
+                    "Managed Firewall Access",
+                    "Mobile File Authentication"
+                ],
+                correctAnswer: 0,
+                explanation: "MFA stands for Multi-Factor Authentication, which requires multiple forms of verification to access systems.",
+                points: 1
+            },
+            {
+                question: "What is the purpose of a firewall?",
+                type: "multiple-choice",
+                options: [
+                    "To speed up internet connection",
+                    "To block unauthorized network access",
+                    "To store backup data",
+                    "To manage user accounts"
+                ],
+                correctAnswer: 1,
+                explanation: "A firewall is designed to block unauthorized network access while allowing authorized communications.",
+                points: 1
+            },
+            {
+                question: "What should you do if you suspect a security breach?",
+                type: "multiple-choice",
+                options: [
+                    "Ignore it",
+                    "Report it immediately to IT security",
+                    "Fix it yourself",
+                    "Wait and see what happens"
+                ],
+                correctAnswer: 1,
+                explanation: "Security breaches should be reported immediately to IT security teams to minimize damage and prevent further compromise.",
+                points: 1
+            }
+        ],
+        totalPoints: 5,
+        passingScore: 70,
+        maxAttempts: 3,
+        tags: ["Cybersecurity", "Security", "Threats", "Protection"],
+        skills: ["Cybersecurity", "Information Security", "Risk Management", "Threat Analysis"]
+    },
+    {
+        title: "Project Management Essentials",
+        description: "Test your knowledge of project management principles, methodologies, and best practices.",
+        category: "project-management",
+        difficulty: "intermediate",
+        duration: 50,
+        questions: [
+            {
+                question: "What are the five phases of project management according to PMI?",
+                type: "multiple-choice",
+                options: [
+                    "Initiate, Plan, Execute, Monitor, Close",
+                    "Start, Design, Build, Test, Deploy",
+                    "Analyze, Design, Develop, Test, Maintain",
+                    "Plan, Do, Check, Act, Review"
+                ],
+                correctAnswer: 0,
+                explanation: "The five phases of project management are: Initiate, Plan, Execute, Monitor & Control, and Close.",
+                points: 1
+            },
+            {
+                question: "What is the 'triple constraint' in project management?",
+                type: "multiple-choice",
+                options: [
+                    "Time, Cost, Quality",
+                    "Scope, Time, Cost",
+                    "Resources, Time, Budget",
+                    "Risk, Quality, Schedule"
+                ],
+                correctAnswer: 1,
+                explanation: "The triple constraint consists of Scope, Time, and Cost - the three main factors that affect project success.",
+                points: 1
+            },
+            {
+                question: "What is a 'Gantt Chart' used for?",
+                type: "multiple-choice",
+                options: [
+                    "Budget tracking",
+                    "Risk assessment",
+                    "Project scheduling and timeline visualization",
+                    "Quality control"
+                ],
+                correctAnswer: 2,
+                explanation: "A Gantt chart is used for project scheduling and timeline visualization, showing tasks and their dependencies over time.",
+                points: 1
+            },
+            {
+                question: "What does 'WBS' stand for in project management?",
+                type: "multiple-choice",
+                options: [
+                    "Work Breakdown Structure",
+                    "Weekly Business Summary",
+                    "Work Budget Schedule",
+                    "Work Balance Sheet"
+                ],
+                correctAnswer: 0,
+                explanation: "WBS stands for Work Breakdown Structure, which breaks down the project into smaller, manageable components.",
+                points: 1
+            },
+            {
+                question: "What is the purpose of a 'risk register'?",
+                type: "multiple-choice",
+                options: [
+                    "To track project expenses",
+                    "To document and monitor project risks",
+                    "To schedule team meetings",
+                    "To track project progress"
+                ],
+                correctAnswer: 1,
+                explanation: "A risk register is used to document and monitor project risks, including their probability, impact, and mitigation strategies.",
+                points: 1
+            }
+        ],
+        totalPoints: 5,
+        passingScore: 70,
+        maxAttempts: 3,
+        tags: ["Project Management", "PMI", "Planning", "Leadership"],
+        skills: ["Project Management", "Planning", "Risk Management", "Leadership"]
     }
 ];
 

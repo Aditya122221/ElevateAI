@@ -1,12 +1,12 @@
-/* Dashboard Page Styles */
+/* Enhanced Dashboard Page Styles */
 .dashboardPage {
     min-height: 100vh;
-    background: var(--bg-secondary);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     padding: var(--space-6);
 }
 
 .dashboardContainer {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -15,13 +15,14 @@
 }
 
 .welcomeSection {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: var(--radius-2xl);
     padding: var(--space-8);
     color: var(--white);
     margin-bottom: var(--space-8);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
 }
 
 .welcomeSection::before {
@@ -412,10 +413,723 @@
     }
 }
 
+/* Enhanced Dashboard Components */
+
+/* Welcome Section Enhancements */
+.welcomeHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-6);
+}
+
+.welcomeActions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.simulationBtn {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.simulationBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.statCard {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    transition: all var(--transition-normal);
+}
+
+.statCard:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.statIcon {
+    width: 3rem;
+    height: 3rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.statContent {
+    flex: 1;
+}
+
+.statNumber {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+}
+
+.statLabel {
+    font-size: var(--font-size-sm);
+    opacity: 0.9;
+}
+
+/* Tab Navigation */
+.tabNavigation {
+    display: flex;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2);
+    margin-bottom: var(--space-8);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.tabButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.tabButton:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+}
+
+.tabActive {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.tabContent {
+    min-height: 600px;
+}
+
+/* Career Timeline */
+.careerTimeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.careerStep {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    position: relative;
+    transition: all var(--transition-normal);
+}
+
+.careerStep:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.currentStep {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.stepHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.stepIcon {
+    width: 3rem;
+    height: 3rem;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stepInfo {
+    flex: 1;
+}
+
+.stepTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+}
+
+.stepLevel {
+    background: var(--gradient-accent);
+    color: white;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.stepActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.simulateBtn {
+    background: var(--gradient-secondary);
+    color: white;
+    border: none;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.simulateBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stepProgress {
+    margin-bottom: var(--space-4);
+}
+
+.progressBar {
+    width: 100%;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-2);
+}
+
+.progressFill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--transition-normal);
+}
+
+.progressText {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.stepSkills {
+    margin-bottom: var(--space-4);
+}
+
+.skillsTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.skillsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.skillTag {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border: 1px solid var(--border-color);
+}
+
+.stepDetails {
+    display: flex;
+    gap: var(--space-6);
+}
+
+.detailItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+}
+
+/* Skill Heatmap */
+.skillHeatmap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-6);
+}
+
+.skillCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    transition: all var(--transition-normal);
+}
+
+.skillCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.priority-high {
+    border-left: 4px solid #ef4444;
+}
+
+.priority-medium {
+    border-left: 4px solid #f59e0b;
+}
+
+.priority-low {
+    border-left: 4px solid #10b981;
+}
+
+.skillHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.skillName {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.priorityBadge {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-high {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.badge-medium {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.badge-low {
+    background: #f0fdf4;
+    color: #059669;
+}
+
+.skillProgress {
+    margin-bottom: var(--space-4);
+}
+
+.progressLabels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.currentProgress {
+    height: 6px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-full);
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.targetProgress {
+    height: 6px;
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: var(--radius-full);
+    position: relative;
+}
+
+.skillGap {
+    margin-bottom: var(--space-4);
+}
+
+.gapLabel {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+    display: block;
+}
+
+.gapBar {
+    width: 100%;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.gapFill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 100%);
+    border-radius: var(--radius-full);
+    transition: width var(--transition-normal);
+}
+
+.skillActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.learnBtn,
+.testBtn {
+    flex: 1;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: none;
+}
+
+.learnBtn {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.testBtn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.learnBtn:hover,
+.testBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Simulation Cards */
+.simulationCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+}
+
+.simulationCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.simulationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.simulationTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.simulationIcon {
+    width: 3rem;
+    height: 3rem;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.simulationStats {
+    margin-bottom: var(--space-4);
+}
+
+.statItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.statItem:last-child {
+    border-bottom: none;
+}
+
+.statLabel {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.statValue {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.runSimulationBtn {
+    width: 100%;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.runSimulationBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Simulation Modal */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--space-4);
+}
+
+.simulationModal {
+    background: var(--bg-card);
+    border-radius: var(--radius-2xl);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-2xl);
+    border: 1px solid var(--border-color);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modalTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.closeBtn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-full);
+    background: var(--bg-tertiary);
+    border: none;
+    color: var(--text-secondary);
+    font-size: var(--font-size-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.closeBtn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.simulationContent {
+    padding: var(--space-6);
+}
+
+.simulationOverview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.overviewCard {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.overviewIcon {
+    width: 3rem;
+    height: 3rem;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin: 0 auto var(--space-3);
+}
+
+.overviewInfo h3 {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
+}
+
+.overviewInfo p {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.simulationDetails {
+    margin-bottom: var(--space-6);
+}
+
+.detailSection {
+    margin-bottom: var(--space-6);
+}
+
+.sectionTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-3);
+}
+
+.opportunitiesList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.opportunityItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.skillsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.requiredSkill {
+    background: var(--gradient-primary);
+    color: white;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.simulationActions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.startJourneyBtn {
+    flex: 1;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.startJourneyBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.closeModalBtn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.closeModalBtn:hover {
+    background: var(--bg-secondary);
+}
+
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
     .dashboardPage {
-        background: var(--gray-900);
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     }
 
     .dashboardSection {
@@ -451,5 +1165,25 @@
 
     .emptyIcon {
         background: var(--gray-800);
+    }
+
+    .careerStep {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+
+    .skillCard {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+
+    .simulationCard {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
+    }
+
+    .simulationModal {
+        background: var(--gray-800);
+        border-color: var(--gray-700);
     }
 }
