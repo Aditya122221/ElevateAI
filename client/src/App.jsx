@@ -12,6 +12,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
+import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import ProfileCreationPage from './pages/profile/ProfileCreationPage';
 import DashboardPage from './pages/DashboardPage';
 import CertificateLibraryPage from './pages/CertificateLibraryPage';
@@ -112,6 +113,10 @@ function App() {
                       <SignupPage />
                     </PublicRoute>
                   }
+                />
+                <Route
+                  path="/verify-email"
+                  element={<EmailVerificationPage />}
                 />
 
                 {/* Profile Creation Route */}

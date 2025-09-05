@@ -72,8 +72,19 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password) => {
         try {
             const response = await axios.post('/api/auth/register', { name, email, password });
-            const { token: newToken, user: userData } = response.data;
+            const { token: newToken, user: userData, requiresVerification, email: responseEmail } = response.data;
 
+            // If email verification is required, don't set user as logged in yet
+            if (requiresVerification) {
+                return {
+                    success: true,
+                    requiresVerification: true,
+                    email: responseEmail,
+                    message: response.data.message
+                };
+            }
+
+            // If no verification required (shouldn't happen with new flow), proceed as before
             localStorage.setItem('token', newToken);
             setToken(newToken);
             setUser(userData);

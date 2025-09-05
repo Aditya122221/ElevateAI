@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import toast from 'react-hot-toast';
 import styles from './SignupPage.module.css';
 
 const SignupPage = () => {
@@ -29,7 +30,16 @@ const SignupPage = () => {
         try {
             const result = await registerUser(data.name, data.email, data.password);
             if (result.success) {
-                navigate('/profile-creation');
+                if (result.requiresVerification) {
+                    toast.success('Registration successful! Please check your email to verify your account.');
+                    // Show a message to check email instead of redirecting
+                    setError('root', {
+                        message: 'Registration successful! Please check your email and click the verification link to complete your account setup.',
+                        type: 'success'
+                    });
+                } else {
+                    navigate('/profile-creation');
+                }
             } else {
                 setError('root', { message: result.error });
             }
@@ -256,10 +266,16 @@ const SignupPage = () => {
                             <p className="text-sm text-red-600">{errors.terms.message}</p>
                         )}
 
-                        {/* Error Message */}
+                        {/* Success/Error Message */}
                         {errors.root && (
-                            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                                <p className="text-sm text-red-600 dark:text-red-400">
+                            <div className={`p-3 rounded-lg border ${errors.root.type === 'success'
+                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                                }`}>
+                                <p className={`text-sm ${errors.root.type === 'success'
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                    }`}>
                                     {errors.root.message}
                                 </p>
                             </div>

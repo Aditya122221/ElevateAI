@@ -62,4 +62,9 @@ app.use('*', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`ElevateAI Server running on port ${PORT}`);
+    console.log('\n📧 Email Verification Setup:');
+    console.log('   - Make sure to configure SMTP_USER and SMTP_PASS in your .env file');
+    console.log('   - For Gmail, use an App Password (not your regular password)');
+    console.log('   - Check EMAIL_SETUP_GUIDE.md for detailed instructions');
+    console.log('   - If email sending fails, verification links will be logged to console\n');
 });
