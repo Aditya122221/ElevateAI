@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import {
     User,
-    Briefcase,
-    Target,
-    GraduationCap,
+    Code,
+    FolderOpen,
     Award,
+    Briefcase,
+    Users,
     ArrowRight,
     ArrowLeft,
     CheckCircle,
     Plus,
-    X
+    X,
+    Camera,
+    SkipForward
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -23,134 +26,520 @@ import styles from './ProfileCreationPage.module.css';
 const ProfileCreationPage = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
-    const [skills, setSkills] = useState([]);
-    const [interests, setInterests] = useState([]);
-    const [newSkill, setNewSkill] = useState('');
-    const [newInterest, setNewInterest] = useState('');
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [profileProgress, setProfileProgress] = useState(null);
+    const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const { user, updateUser } = useAuth();
     const navigate = useNavigate();
 
     const {
         register,
         handleSubmit,
-        formState: { errors },
+        formState: { errors, isValid },
         watch,
-        setValue
+        setValue,
+        getValues,
+        reset
     } = useForm({
         defaultValues: {
-            personalInfo: {
+            basicDetails: {
                 firstName: '',
                 lastName: '',
-                age: '',
-                location: {
-                    country: '',
-                    city: ''
-                },
+                email: '',
+                phone: '',
+                linkedin: '',
+                github: '',
+                profilePicture: '',
+                twitter: '',
+                website: '',
+                portfolio: '',
                 bio: ''
             },
-            careerInfo: {
-                currentRole: '',
-                desiredRole: '',
-                experienceLevel: '',
-                industry: '',
-                salaryExpectation: {
-                    min: '',
-                    max: '',
-                    currency: 'USD'
-                }
+            skills: {
+                languages: [],
+                technologies: [],
+                frameworks: [],
+                tools: [],
+                softSkills: []
             },
-            goals: {
-                shortTerm: [],
-                longTerm: []
-            }
+            projects: [],
+            certificates: [],
+            experience: [],
+            desiredJobRoles: []
         }
     });
 
     const steps = [
-        { number: 1, title: 'Personal Info', icon: User },
-        { number: 2, title: 'Career Info', icon: Briefcase },
-        { number: 3, title: 'Skills & Interests', icon: Award },
-        { number: 4, title: 'Goals', icon: Target }
+        { number: 1, title: 'Basic Details', icon: User, required: true },
+        { number: 2, title: 'Skills', icon: Code, required: true },
+        { number: 3, title: 'Projects', icon: FolderOpen, required: false },
+        { number: 4, title: 'Certificates', icon: Award, required: false },
+        { number: 5, title: 'Experience', icon: Briefcase, required: false },
+        { number: 6, title: 'Job Roles', icon: Users, required: true }
     ];
 
-    const experienceLevels = [
-        { value: 'entry', label: 'Entry Level (0-2 years)' },
-        { value: 'junior', label: 'Junior (2-4 years)' },
-        { value: 'mid', label: 'Mid Level (4-7 years)' },
-        { value: 'senior', label: 'Senior (7-10 years)' },
-        { value: 'lead', label: 'Lead (10+ years)' },
-        { value: 'executive', label: 'Executive' }
-    ];
 
-    const industries = [
-        'Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing',
-        'Retail', 'Consulting', 'Media', 'Government', 'Non-profit', 'Other'
-    ];
 
-    const addSkill = () => {
-        if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-            setSkills([...skills, newSkill.trim()]);
-            setNewSkill('');
+    // Load existing profile data from separate sections
+    useEffect(() => {
+        const loadAllSections = async () => {
+            try {
+                setIsLoadingProgress(true);
+
+                // Fetch all sections in parallel
+                const [basicDetailsRes, skillsRes, projectsRes, certificatesRes, experienceRes, jobRolesRes] = await Promise.allSettled([
+                    axios.get('/api/profile/basic-details'),
+                    axios.get('/api/profile/skills'),
+                    axios.get('/api/profile/projects'),
+                    axios.get('/api/profile/certificates'),
+                    axios.get('/api/profile/experience'),
+                    axios.get('/api/profile/job-roles')
+                ]);
+
+                // Build form data from responses
+                const formData = {
+                    basicDetails: basicDetailsRes.status === 'fulfilled' && basicDetailsRes.value.data.data ? basicDetailsRes.value.data.data : {
+                        firstName: '',
+                        lastName: '',
+                        email: user?.email || '',
+                        phone: '',
+                        linkedin: '',
+                        github: '',
+                        profilePicture: '',
+                        twitter: '',
+                        website: '',
+                        portfolio: '',
+                        bio: ''
+                    },
+                    skills: skillsRes.status === 'fulfilled' && skillsRes.value.data.data ? skillsRes.value.data.data : {
+                        languages: [],
+                        technologies: [],
+                        frameworks: [],
+                        tools: [],
+                        softSkills: []
+                    },
+                    projects: projectsRes.status === 'fulfilled' && projectsRes.value.data.data ? projectsRes.value.data.data.projects || [] : [],
+                    certificates: certificatesRes.status === 'fulfilled' && certificatesRes.value.data.data ? certificatesRes.value.data.data.certificates || [] : [],
+                    experience: experienceRes.status === 'fulfilled' && experienceRes.value.data.data ? experienceRes.value.data.data.experiences || [] : [],
+                    desiredJobRoles: jobRolesRes.status === 'fulfilled' && jobRolesRes.value.data.data ? jobRolesRes.value.data.data.desiredJobRoles || [] : []
+                };
+
+                reset(formData);
+
+                // Determine which step to start on based on completed sections
+                let startStep = 1;
+                if (formData.basicDetails.firstName && formData.basicDetails.lastName && formData.basicDetails.email && formData.basicDetails.phone && formData.basicDetails.linkedin && formData.basicDetails.github) {
+                    startStep = 2;
+                }
+                if (startStep === 2 && (formData.skills.languages.length > 0 || formData.skills.technologies.length > 0 || formData.skills.frameworks.length > 0 || formData.skills.tools.length > 0 || formData.skills.softSkills.length > 0)) {
+                    startStep = 3;
+                }
+                if (startStep === 3 && formData.projects.length > 0) {
+                    startStep = 4;
+                }
+                if (startStep === 4 && formData.certificates.length > 0) {
+                    startStep = 5;
+                }
+                if (startStep === 5 && formData.experience.length > 0) {
+                    startStep = 6;
+                }
+                if (startStep === 6 && formData.desiredJobRoles.length > 0) {
+                    startStep = 6; // All completed
+                }
+
+                setCurrentStep(startStep);
+
+            } catch (error) {
+                toast.error('Failed to load profile data');
+                setCurrentStep(1);
+            } finally {
+                setIsLoadingProgress(false);
+            }
+        };
+
+        if (user) {
+            loadAllSections();
+        }
+    }, [user, reset]);
+
+
+    // Watch form values to trigger re-validation
+    watch();
+
+    // Image upload handler
+    const handleImageUpload = async (file, type) => {
+        setUploadingImage(true);
+        try {
+            const formData = new FormData();
+            formData.append(type, file);
+
+            const response = await axios.post(`/api/profile/upload-${type}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            return response.data.imageUrl;
+        } catch (error) {
+            toast.error('Failed to upload image');
+            throw error;
+        } finally {
+            setUploadingImage(false);
         }
     };
 
-    const removeSkill = (skillToRemove) => {
-        setSkills(skills.filter(skill => skill !== skillToRemove));
-    };
-
-    const addInterest = () => {
-        if (newInterest.trim() && !interests.includes(newInterest.trim())) {
-            setInterests([...interests, newInterest.trim()]);
-            setNewInterest('');
+    // Skill management functions
+    const addSkill = (category, skillName) => {
+        const currentSkills = getValues(`skills.${category}`) || [];
+        if (skillName.trim() && !currentSkills.includes(skillName.trim())) {
+            setValue(`skills.${category}`, [...currentSkills, skillName.trim()]);
         }
     };
 
-    const removeInterest = (interestToRemove) => {
-        setInterests(interests.filter(interest => interest !== interestToRemove));
+    const removeSkill = (category, index) => {
+        const currentSkills = getValues(`skills.${category}`) || [];
+        setValue(`skills.${category}`, currentSkills.filter((_, i) => i !== index));
     };
 
-    const nextStep = () => {
+    // Project management functions
+    const addProject = () => {
+        const currentProjects = getValues('projects') || [];
+        setValue('projects', [...currentProjects, {
+            name: '',
+            details: [''],
+            githubLink: '',
+            liveUrl: '',
+            startDate: '',
+            endDate: '',
+            skillsUsed: [],
+            image: ''
+        }]);
+    };
+
+    const addProjectDetail = (projectIndex) => {
+        const currentProjects = getValues('projects') || [];
+        const updatedProjects = [...currentProjects];
+        updatedProjects[projectIndex].details.push('');
+        setValue('projects', updatedProjects);
+    };
+
+    const removeProjectDetail = (projectIndex, detailIndex) => {
+        const currentProjects = getValues('projects') || [];
+        const updatedProjects = [...currentProjects];
+        updatedProjects[projectIndex].details = updatedProjects[projectIndex].details.filter((_, i) => i !== detailIndex);
+        setValue('projects', updatedProjects);
+    };
+
+    const updateProjectDetail = (projectIndex, detailIndex, value) => {
+        const currentProjects = getValues('projects') || [];
+        const updatedProjects = [...currentProjects];
+        updatedProjects[projectIndex].details[detailIndex] = value;
+        setValue('projects', updatedProjects);
+    };
+
+    const addProjectSkill = (projectIndex, skillName) => {
+        const currentProjects = getValues('projects') || [];
+        const updatedProjects = [...currentProjects];
+        const currentSkills = updatedProjects[projectIndex].skillsUsed || [];
+        if (skillName.trim() && !currentSkills.includes(skillName.trim())) {
+            updatedProjects[projectIndex].skillsUsed = [...currentSkills, skillName.trim()];
+            setValue('projects', updatedProjects);
+        }
+    };
+
+    const removeProjectSkill = (projectIndex, skillIndex) => {
+        const currentProjects = getValues('projects') || [];
+        const updatedProjects = [...currentProjects];
+        updatedProjects[projectIndex].skillsUsed = updatedProjects[projectIndex].skillsUsed.filter((_, i) => i !== skillIndex);
+        setValue('projects', updatedProjects);
+    };
+
+    const removeProject = (index) => {
+        const currentProjects = getValues('projects') || [];
+        setValue('projects', currentProjects.filter((_, i) => i !== index));
+    };
+
+
+
+    // Certificate management functions
+    const addCertificate = () => {
+        const currentCertificates = getValues('certificates') || [];
+        setValue('certificates', [...currentCertificates, {
+            name: '',
+            platform: '',
+            skills: [],
+            startDate: '',
+            endDate: '',
+            credentialId: '',
+            verificationUrl: '',
+            certificateUrl: ''
+        }]);
+    };
+
+    const removeCertificate = (index) => {
+        const currentCertificates = getValues('certificates') || [];
+        setValue('certificates', currentCertificates.filter((_, i) => i !== index));
+    };
+
+    // Experience management functions
+    const addExperience = () => {
+        const currentExperience = getValues('experience') || [];
+        setValue('experience', [...currentExperience, {
+            companyName: '',
+            position: '',
+            startDate: '',
+            endDate: '',
+            current: false,
+            skills: [],
+            achievements: [''],
+            description: ''
+        }]);
+    };
+
+    const removeExperience = (index) => {
+        const currentExperience = getValues('experience') || [];
+        setValue('experience', currentExperience.filter((_, i) => i !== index));
+    };
+
+    const updateExperienceAchievement = (expIndex, achievementIndex, value) => {
+        const currentExperience = getValues('experience') || [];
+        const updatedExperience = [...currentExperience];
+        updatedExperience[expIndex].achievements[achievementIndex] = value;
+        setValue('experience', updatedExperience);
+    };
+
+    const addExperienceAchievement = (expIndex) => {
+        const currentExperience = getValues('experience') || [];
+        const updatedExperience = [...currentExperience];
+        updatedExperience[expIndex].achievements.push('');
+        setValue('experience', updatedExperience);
+    };
+
+    const removeExperienceAchievement = (expIndex, achievementIndex) => {
+        const currentExperience = getValues('experience') || [];
+        const updatedExperience = [...currentExperience];
+        updatedExperience[expIndex].achievements = updatedExperience[expIndex].achievements.filter((_, i) => i !== achievementIndex);
+        setValue('experience', updatedExperience);
+    };
+
+    // Job role management
+    // Job roles management functions
+    const addJobRole = (roleName) => {
+        const currentRoles = getValues('desiredJobRoles') || [];
+        if (roleName.trim() && !currentRoles.includes(roleName.trim())) {
+            setValue('desiredJobRoles', [...currentRoles, roleName.trim()]);
+        }
+    };
+
+    const removeJobRole = (index) => {
+        const currentRoles = getValues('desiredJobRoles') || [];
+        setValue('desiredJobRoles', currentRoles.filter((_, i) => i !== index));
+    };
+
+    // Save current section data
+    const saveCurrentSection = async (step) => {
+        try {
+            setIsSaving(true);
+            const formData = getValues();
+
+            let endpoint = '';
+            let dataToSave = {};
+
+            switch (step) {
+                case 1: // Basic Details
+                    endpoint = '/api/profile/basic-details';
+                    dataToSave = formData.basicDetails;
+                    break;
+                case 2: // Skills
+                    endpoint = '/api/profile/skills';
+                    dataToSave = formData.skills;
+                    break;
+                case 3: // Projects
+                    endpoint = '/api/profile/projects';
+                    dataToSave = { projects: formData.projects };
+                    break;
+                case 4: // Certificates
+                    endpoint = '/api/profile/certificates';
+                    dataToSave = { certificates: formData.certificates };
+                    break;
+                case 5: // Experience
+                    endpoint = '/api/profile/experience';
+                    dataToSave = { experiences: formData.experience };
+                    break;
+                case 6: // Job Roles
+                    endpoint = '/api/profile/job-roles';
+                    dataToSave = { desiredJobRoles: formData.desiredJobRoles };
+                    break;
+                default:
+                    throw new Error('Invalid step number');
+            }
+
+            await axios.post(endpoint, dataToSave);
+            toast.success(`Step ${step} saved successfully!`);
+        } catch (error) {
+            console.error(`Failed to save step ${step}:`, error);
+            toast.error(`Failed to save step ${step}`);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // Fetch current section data
+    const fetchCurrentSection = async (step) => {
+        try {
+            let endpoint = '';
+
+            switch (step) {
+                case 1: // Basic Details
+                    endpoint = '/api/profile/basic-details';
+                    break;
+                case 2: // Skills
+                    endpoint = '/api/profile/skills';
+                    break;
+                case 3: // Projects
+                    endpoint = '/api/profile/projects';
+                    break;
+                case 4: // Certificates
+                    endpoint = '/api/profile/certificates';
+                    break;
+                case 5: // Experience
+                    endpoint = '/api/profile/experience';
+                    break;
+                case 6: // Job Roles
+                    endpoint = '/api/profile/job-roles';
+                    break;
+                default:
+                    throw new Error('Invalid step number');
+            }
+
+            const response = await axios.get(endpoint);
+
+            if (response.data.data) {
+                const sectionData = response.data.data;
+
+                switch (step) {
+                    case 1: // Basic Details
+                        setValue('basicDetails', sectionData);
+                        break;
+                    case 2: // Skills
+                        setValue('skills', sectionData);
+                        break;
+                    case 3: // Projects
+                        setValue('projects', sectionData.projects || []);
+                        break;
+                    case 4: // Certificates
+                        setValue('certificates', sectionData.certificates || []);
+                        break;
+                    case 5: // Experience
+                        setValue('experience', sectionData.experiences || []);
+                        break;
+                    case 6: // Job Roles
+                        setValue('desiredJobRoles', sectionData.desiredJobRoles || []);
+                        break;
+                }
+            }
+        } catch (error) {
+            // Don't show error toast for fetch - it's normal if no data exists yet
+        }
+    };
+
+    const nextStep = async () => {
         if (currentStep < steps.length) {
+            // Save current section before moving to next step
+            await saveCurrentSection(currentStep);
             setCurrentStep(currentStep + 1);
+            // Fetch next section data
+            await fetchCurrentSection(currentStep + 1);
         }
     };
 
-    const prevStep = () => {
+    const prevStep = async () => {
         if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
+            // Fetch previous section data
+            await fetchCurrentSection(currentStep - 1);
+        }
+    };
+
+    const skipStep = async () => {
+        if (currentStep < steps.length) {
+            // Save current section before skipping
+            await saveCurrentSection(currentStep);
+            setCurrentStep(currentStep + 1);
+            // Fetch next section data
+            await fetchCurrentSection(currentStep + 1);
         }
     };
 
     const onSubmit = async (data) => {
         setIsLoading(true);
         try {
-            const profileData = {
-                ...data,
-                skills: {
-                    technical: skills.map(skill => ({ name: skill, level: 'intermediate' })),
-                    soft: [],
-                    languages: []
-                },
-                interests,
-                goals: {
-                    shortTerm: data.goals.shortTerm || [],
-                    longTerm: data.goals.longTerm || []
-                }
-            };
+            // First, save the current step data before completing the profile
+            await saveCurrentSection(currentStep);
 
-            await axios.post('/api/profile', profileData);
+            // Then use the completion endpoint that combines all sections
+            await axios.post('/api/profile/complete');
 
-            // Refresh user data from server to get updated profile completion status
+            // Refresh user data from server
             const userResponse = await axios.get('/api/auth/me');
             updateUser(userResponse.data.user);
 
-            toast.success('Profile created successfully!');
+            toast.success('Profile completed successfully!');
             navigate('/dashboard');
         } catch (error) {
-            toast.error('Failed to create profile. Please try again.');
-            console.error('Profile creation error:', error);
+            console.error('Profile completion error:', error);
+
+            // Show more specific error message if available
+            if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error('Failed to complete profile. Please try again.');
+            }
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const canProceed = () => {
+        try {
+            switch (currentStep) {
+                case 1:
+                    const basicDetails = getValues('basicDetails') || {};
+                    return Boolean(
+                        basicDetails.firstName?.trim() &&
+                        basicDetails.lastName?.trim() &&
+                        basicDetails.email?.trim() &&
+                        basicDetails.phone?.trim() &&
+                        basicDetails.linkedin?.trim() &&
+                        basicDetails.github?.trim()
+                    );
+                case 2:
+                    const skills = getValues('skills') || {};
+                    return Boolean(
+                        Object.values(skills).some(skillArray =>
+                            Array.isArray(skillArray) && skillArray.length > 0
+                        )
+                    );
+                case 3:
+                    // Projects validation - if projects exist, they must have required fields
+                    const projects = getValues('projects') || [];
+                    if (projects.length === 0) return true; // No projects is allowed
+
+                    return projects.every(project => {
+                        // Required fields: name, startDate, at least one detail point
+                        const hasName = project.name?.trim();
+                        const hasStartDate = project.startDate?.trim();
+                        const hasDetails = project.details?.some(detail => detail?.trim());
+
+                        return hasName && hasStartDate && hasDetails;
+                    });
+                case 6:
+                    const jobRoles = getValues('desiredJobRoles') || [];
+                    return Boolean(Array.isArray(jobRoles) && jobRoles.length > 0);
+                default:
+                    return true; // Optional steps
+            }
+        } catch (error) {
+            return false;
         }
     };
 
@@ -161,77 +550,168 @@ const ProfileCreationPage = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        className={styles.stepContent}
                     >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="form-group">
-                                <label className="form-label">First Name *</label>
+                        <div className={styles.sectionHeader}>
+                            <h3>Basic Information</h3>
+                            <p>Tell us about yourself - this information is required</p>
+                        </div>
+
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>First Name *</label>
                                 <input
-                                    {...register('personalInfo.firstName', { required: 'First name is required' })}
+                                    {...register('basicDetails.firstName', { required: 'First name is required' })}
                                     type="text"
-                                    className={`form-input ${errors.personalInfo?.firstName ? 'border-red-500' : ''}`}
+                                    className={`${styles.formInput} ${errors.basicDetails?.firstName ? styles.error : ''}`}
                                     placeholder="Enter your first name"
                                 />
-                                {errors.personalInfo?.firstName && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.personalInfo.firstName.message}</p>
+                                {errors.basicDetails?.firstName && (
+                                    <p className={styles.errorText}>{errors.basicDetails.firstName.message}</p>
                                 )}
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Last Name *</label>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>Last Name *</label>
                                 <input
-                                    {...register('personalInfo.lastName', { required: 'Last name is required' })}
+                                    {...register('basicDetails.lastName', { required: 'Last name is required' })}
                                     type="text"
-                                    className={`form-input ${errors.personalInfo?.lastName ? 'border-red-500' : ''}`}
+                                    className={`${styles.formInput} ${errors.basicDetails?.lastName ? styles.error : ''}`}
                                     placeholder="Enter your last name"
                                 />
-                                {errors.personalInfo?.lastName && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.personalInfo.lastName.message}</p>
+                                {errors.basicDetails?.lastName && (
+                                    <p className={styles.errorText}>{errors.basicDetails.lastName.message}</p>
                                 )}
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Age</label>
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Email *</label>
                             <input
-                                {...register('personalInfo.age', {
-                                    min: { value: 16, message: 'Age must be at least 16' },
-                                    max: { value: 100, message: 'Age must be less than 100' }
+                                {...register('basicDetails.email', {
+                                    required: 'Email is required',
+                                    pattern: {
+                                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                                        message: 'Invalid email address'
+                                    }
                                 })}
-                                type="number"
-                                className={`form-input ${errors.personalInfo?.age ? 'border-red-500' : ''}`}
-                                placeholder="Enter your age"
+                                type="email"
+                                className={`${styles.formInput} ${errors.basicDetails?.email ? styles.error : ''}`}
+                                placeholder="Enter your email"
                             />
-                            {errors.personalInfo?.age && (
-                                <p className="mt-1 text-sm text-red-600">{errors.personalInfo.age.message}</p>
+                            {errors.basicDetails?.email && (
+                                <p className={styles.errorText}>{errors.basicDetails.email.message}</p>
                             )}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="form-group">
-                                <label className="form-label">Country</label>
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Phone Number *</label>
+                            <input
+                                {...register('basicDetails.phone', { required: 'Phone number is required' })}
+                                type="tel"
+                                className={`${styles.formInput} ${errors.basicDetails?.phone ? styles.error : ''}`}
+                                placeholder="Enter your phone number"
+                            />
+                            {errors.basicDetails?.phone && (
+                                <p className={styles.errorText}>{errors.basicDetails.phone.message}</p>
+                            )}
+                        </div>
+
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>LinkedIn Profile *</label>
                                 <input
-                                    {...register('personalInfo.location.country')}
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Enter your country"
+                                    {...register('basicDetails.linkedin', { required: 'LinkedIn profile is required' })}
+                                    type="url"
+                                    className={`${styles.formInput} ${errors.basicDetails?.linkedin ? styles.error : ''}`}
+                                    placeholder="https://linkedin.com/in/yourprofile"
+                                />
+                                {errors.basicDetails?.linkedin && (
+                                    <p className={styles.errorText}>{errors.basicDetails.linkedin.message}</p>
+                                )}
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>GitHub Profile *</label>
+                                <input
+                                    {...register('basicDetails.github', { required: 'GitHub profile is required' })}
+                                    type="url"
+                                    className={`${styles.formInput} ${errors.basicDetails?.github ? styles.error : ''}`}
+                                    placeholder="https://github.com/yourusername"
+                                />
+                                {errors.basicDetails?.github && (
+                                    <p className={styles.errorText}>{errors.basicDetails.github.message}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Profile Picture</label>
+                            <div className={styles.imageUploadContainer}>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                        if (e.target.files[0]) {
+                                            try {
+                                                const imageUrl = await handleImageUpload(e.target.files[0], 'profilePicture');
+                                                setValue('basicDetails.profilePicture', imageUrl);
+                                            } catch (error) {
+                                                toast.error('Failed to upload image');
+                                            }
+                                        }
+                                    }}
+                                    className={styles.fileInput}
+                                />
+                                <div className={styles.uploadButton}>
+                                    <Camera size={20} />
+                                    <span>Upload Photo</span>
+                                </div>
+                                {watch('basicDetails.profilePicture') && (
+                                    <div className={styles.imagePreview}>
+                                        <img src={watch('basicDetails.profilePicture')} alt="Profile preview" />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>Twitter</label>
+                                <input
+                                    {...register('basicDetails.twitter')}
+                                    type="url"
+                                    className={styles.formInput}
+                                    placeholder="https://twitter.com/yourusername"
                                 />
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">City</label>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.formLabel}>Website</label>
                                 <input
-                                    {...register('personalInfo.location.city')}
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="Enter your city"
+                                    {...register('basicDetails.website')}
+                                    type="url"
+                                    className={styles.formInput}
+                                    placeholder="https://yourwebsite.com"
                                 />
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Bio</label>
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Portfolio</label>
+                            <input
+                                {...register('basicDetails.portfolio')}
+                                type="url"
+                                className={styles.formInput}
+                                placeholder="https://yourportfolio.com"
+                            />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>Bio</label>
                             <textarea
-                                {...register('personalInfo.bio')}
-                                className="form-input form-textarea"
+                                {...register('basicDetails.bio')}
+                                className={styles.formTextarea}
                                 placeholder="Tell us about yourself..."
                                 rows={4}
                             />
@@ -244,96 +724,61 @@ const ProfileCreationPage = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        className={styles.stepContent}
                     >
-                        <div className="form-group">
-                            <label className="form-label">Current Role</label>
-                            <input
-                                {...register('careerInfo.currentRole')}
-                                type="text"
-                                className="form-input"
-                                placeholder="e.g., Software Developer, Marketing Manager"
-                            />
+                        <div className={styles.sectionHeader}>
+                            <h3>Skills & Expertise</h3>
+                            <p>Add your technical and soft skills - at least one skill is required</p>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Desired Role *</label>
-                            <input
-                                {...register('careerInfo.desiredRole', { required: 'Desired role is required' })}
-                                type="text"
-                                className={`form-input ${errors.careerInfo?.desiredRole ? 'border-red-500' : ''}`}
-                                placeholder="e.g., Senior Software Engineer, Product Manager"
-                            />
-                            {errors.careerInfo?.desiredRole && (
-                                <p className="mt-1 text-sm text-red-600">{errors.careerInfo.desiredRole.message}</p>
-                            )}
-                        </div>
+                        {['languages', 'technologies', 'frameworks', 'tools', 'softSkills'].map(category => (
+                            <div key={category} className={styles.skillCategory}>
+                                <h4 className={styles.categoryTitle}>
+                                    {category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}
+                                </h4>
 
-                        <div className="form-group">
-                            <label className="form-label">Experience Level *</label>
-                            <select
-                                {...register('careerInfo.experienceLevel', { required: 'Experience level is required' })}
-                                className={`form-input form-select ${errors.careerInfo?.experienceLevel ? 'border-red-500' : ''}`}
-                            >
-                                <option value="">Select your experience level</option>
-                                {experienceLevels.map(level => (
-                                    <option key={level.value} value={level.value}>
-                                        {level.label}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.careerInfo?.experienceLevel && (
-                                <p className="mt-1 text-sm text-red-600">{errors.careerInfo.experienceLevel.message}</p>
-                            )}
-                        </div>
+                                <div className={styles.skillInputContainer}>
+                                    <input
+                                        type="text"
+                                        placeholder={`Add ${category.replace(/([A-Z])/g, ' $1').toLowerCase()}`}
+                                        onKeyPress={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                addSkill(category, e.target.value);
+                                                e.target.value = '';
+                                            }
+                                        }}
+                                        className={styles.skillInput}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            const input = e.target.previousElementSibling;
+                                            addSkill(category, input.value);
+                                            input.value = '';
+                                        }}
+                                        className={styles.addSkillButton}
+                                    >
+                                        <Plus size={16} />
+                                    </button>
+                                </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Industry</label>
-                            <select
-                                {...register('careerInfo.industry')}
-                                className="form-input form-select"
-                            >
-                                <option value="">Select your industry</option>
-                                {industries.map(industry => (
-                                    <option key={industry} value={industry}>
-                                        {industry}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="form-group">
-                                <label className="form-label">Min Salary</label>
-                                <input
-                                    {...register('careerInfo.salaryExpectation.min')}
-                                    type="number"
-                                    className="form-input"
-                                    placeholder="50000"
-                                />
+                                <div className={styles.skillsList}>
+                                    {(getValues(`skills.${category}`) || []).map((skill, index) => (
+                                        <div key={index} className={styles.skillItem}>
+                                            <span className={styles.skillName}>{skill}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeSkill(category, index)}
+                                                className={styles.removeSkillButton}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label className="form-label">Max Salary</label>
-                                <input
-                                    {...register('careerInfo.salaryExpectation.max')}
-                                    type="number"
-                                    className="form-input"
-                                    placeholder="100000"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Currency</label>
-                                <select
-                                    {...register('careerInfo.salaryExpectation.currency')}
-                                    className="form-input form-select"
-                                >
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="GBP">GBP</option>
-                                    <option value="CAD">CAD</option>
-                                </select>
-                            </div>
-                        </div>
+                        ))}
                     </motion.div>
                 );
 
@@ -342,82 +787,164 @@ const ProfileCreationPage = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        className={styles.stepContent}
                     >
-                        <div className="form-group">
-                            <label className="form-label">Technical Skills</label>
-                            <div className="flex gap-2 mb-3">
-                                <input
-                                    type="text"
-                                    value={newSkill}
-                                    onChange={(e) => setNewSkill(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                                    className="form-input flex-1"
-                                    placeholder="e.g., JavaScript, Python, React"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={addSkill}
-                                    className="btn btn-outline"
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {skills.map((skill, index) => (
-                                    <span
-                                        key={index}
-                                        className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
-                                    >
-                                        {skill}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSkill(skill)}
-                                            className="hover:text-red-500"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </span>
-                                ))}
-                            </div>
+                        <div className={styles.sectionHeader}>
+                            <h3>Projects</h3>
+                            <p>Add your projects and work - this section is optional</p>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Interests</label>
-                            <div className="flex gap-2 mb-3">
-                                <input
-                                    type="text"
-                                    value={newInterest}
-                                    onChange={(e) => setNewInterest(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterest())}
-                                    className="form-input flex-1"
-                                    placeholder="e.g., Machine Learning, UI/UX Design, Data Science"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={addInterest}
-                                    className="btn btn-outline"
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {interests.map((interest, index) => (
-                                    <span
-                                        key={index}
-                                        className="inline-flex items-center gap-1 px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm"
-                                    >
-                                        {interest}
+                        <div className={styles.projectsContainer}>
+                            {(getValues('projects') || []).map((project, index) => (
+                                <div key={index} className={styles.projectCard}>
+                                    <div className={styles.projectHeader}>
+                                        <h4>Project {index + 1}</h4>
                                         <button
                                             type="button"
-                                            onClick={() => removeInterest(interest)}
-                                            className="hover:text-red-500"
+                                            onClick={() => removeProject(index)}
+                                            className={styles.removeButton}
                                         >
-                                            <X size={14} />
+                                            <X size={16} />
                                         </button>
-                                    </span>
-                                ))}
-                            </div>
+                                    </div>
+
+                                    <div className={styles.formGrid}>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Project Name *</label>
+                                            <input
+                                                {...register(`projects.${index}.name`)}
+                                                className={styles.formInput}
+                                                placeholder="Enter project name"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>GitHub Link</label>
+                                            <input
+                                                {...register(`projects.${index}.githubLink`)}
+                                                className={styles.formInput}
+                                                placeholder="https://github.com/username/project"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Live URL</label>
+                                            <input
+                                                {...register(`projects.${index}.liveUrl`)}
+                                                className={styles.formInput}
+                                                placeholder="https://your-project.com"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Start Date *</label>
+                                            <input
+                                                {...register(`projects.${index}.startDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>End Date</label>
+                                            <input
+                                                {...register(`projects.${index}.endDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                            />
+                                        </div>
+                                    </div>
+
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Project Details (Points) *</label>
+                                        <div className={styles.detailsContainer}>
+                                            {(getValues(`projects.${index}.details`) || ['']).map((detail, detailIndex) => (
+                                                <div key={detailIndex} className={styles.detailItem}>
+                                                    <input
+                                                        type="text"
+                                                        value={detail}
+                                                        onChange={(e) => updateProjectDetail(index, detailIndex, e.target.value)}
+                                                        className={styles.detailInput}
+                                                        placeholder="Enter project detail point..."
+                                                        required={detailIndex === 0}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeProjectDetail(index, detailIndex)}
+                                                        className={styles.removeDetailButton}
+                                                        disabled={(getValues(`projects.${index}.details`) || []).length === 1}
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => addProjectDetail(index)}
+                                                className={styles.addDetailButton}
+                                            >
+                                                <Plus size={16} />
+                                                Add Detail Point
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Skills Used</label>
+                                        <div className={styles.skillInputContainer}>
+                                            <input
+                                                type="text"
+                                                placeholder="Add skill used in this project"
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        addProjectSkill(index, e.target.value);
+                                                        e.target.value = '';
+                                                    }
+                                                }}
+                                                className={styles.skillInput}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    const input = e.target.previousElementSibling;
+                                                    addProjectSkill(index, input.value);
+                                                    input.value = '';
+                                                }}
+                                                className={styles.addSkillButton}
+                                            >
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+                                        <div className={styles.skillsList}>
+                                            {(getValues(`projects.${index}.skillsUsed`) || []).map((skill, skillIndex) => (
+                                                <div key={skillIndex} className={styles.skillItem}>
+                                                    <span className={styles.skillName}>{skill}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeProjectSkill(index, skillIndex)}
+                                                        className={styles.removeSkillButton}
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addProject}
+                                className={styles.addButton}
+                            >
+                                <Plus size={16} />
+                                Add Project
+                            </button>
                         </div>
                     </motion.div>
                 );
@@ -427,34 +954,317 @@ const ProfileCreationPage = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="space-y-6"
+                        className={styles.stepContent}
                     >
-                        <div className="form-group">
-                            <label className="form-label">Short-term Goals (next 6 months)</label>
-                            <textarea
-                                {...register('goals.shortTerm')}
-                                className="form-input form-textarea"
-                                placeholder="e.g., Learn React, Get AWS certification, Improve communication skills"
-                                rows={3}
-                            />
+                        <div className={styles.sectionHeader}>
+                            <h3>Certificates</h3>
+                            <p>Add your certifications and achievements - this section is optional</p>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label">Long-term Goals (next 2-3 years)</label>
-                            <textarea
-                                {...register('goals.longTerm')}
-                                className="form-input form-textarea"
-                                placeholder="e.g., Become a senior developer, Start my own company, Lead a team"
-                                rows={3}
-                            />
+                        <div className={styles.certificatesContainer}>
+                            {(getValues('certificates') || []).map((certificate, index) => (
+                                <div key={index} className={styles.certificateCard}>
+                                    <div className={styles.certificateHeader}>
+                                        <h4>Certificate {index + 1}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCertificate(index)}
+                                            className={styles.removeButton}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div className={styles.formGrid}>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Certificate Name *</label>
+                                            <input
+                                                {...register(`certificates.${index}.name`)}
+                                                className={styles.formInput}
+                                                placeholder="Enter certificate name"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Platform/Issuer *</label>
+                                            <input
+                                                {...register(`certificates.${index}.platform`)}
+                                                className={styles.formInput}
+                                                placeholder="e.g., Coursera, Google, Microsoft"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Start Date</label>
+                                            <input
+                                                {...register(`certificates.${index}.startDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>End Date</label>
+                                            <input
+                                                {...register(`certificates.${index}.endDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Credential ID</label>
+                                            <input
+                                                {...register(`certificates.${index}.credentialId`)}
+                                                className={styles.formInput}
+                                                placeholder="Certificate ID or verification code"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Verification URL</label>
+                                            <input
+                                                {...register(`certificates.${index}.verificationUrl`)}
+                                                className={styles.formInput}
+                                                placeholder="https://verify.certificate.com/..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Skills Covered</label>
+                                        <input
+                                            {...register(`certificates.${index}.skills`)}
+                                            className={styles.formInput}
+                                            placeholder="JavaScript, React, AWS (comma separated)"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addCertificate}
+                                className={styles.addButton}
+                            >
+                                <Plus size={16} />
+                                Add Certificate
+                            </button>
                         </div>
                     </motion.div>
                 );
 
+            case 5:
+                return (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={styles.stepContent}
+                    >
+                        <div className={styles.sectionHeader}>
+                            <h3>Work Experience</h3>
+                            <p>Add your professional experience - this section is optional</p>
+                        </div>
+
+                        <div className={styles.experienceContainer}>
+                            {(getValues('experience') || []).map((exp, index) => (
+                                <div key={index} className={styles.experienceCard}>
+                                    <div className={styles.experienceHeader}>
+                                        <h4>Experience {index + 1}</h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeExperience(index)}
+                                            className={styles.removeButton}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    <div className={styles.formGrid}>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Company Name *</label>
+                                            <input
+                                                {...register(`experience.${index}.companyName`)}
+                                                className={styles.formInput}
+                                                placeholder="Enter company name"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Position *</label>
+                                            <input
+                                                {...register(`experience.${index}.position`)}
+                                                className={styles.formInput}
+                                                placeholder="Enter your position"
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>Start Date *</label>
+                                            <input
+                                                {...register(`experience.${index}.startDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                            />
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>End Date</label>
+                                            <input
+                                                {...register(`experience.${index}.endDate`)}
+                                                type="date"
+                                                className={styles.formInput}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>
+                                            <input
+                                                {...register(`experience.${index}.isCurrent`)}
+                                                type="checkbox"
+                                                className={styles.checkbox}
+                                            />
+                                            Currently working here
+                                        </label>
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Job Description</label>
+                                        <textarea
+                                            {...register(`experience.${index}.description`)}
+                                            className={styles.formTextarea}
+                                            placeholder="Describe your role and responsibilities..."
+                                            rows={3}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Key Achievements</label>
+                                        <textarea
+                                            {...register(`experience.${index}.achievements`)}
+                                            className={styles.formTextarea}
+                                            placeholder="List your key achievements (one per line)..."
+                                            rows={3}
+                                        />
+                                    </div>
+
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.formLabel}>Skills Used</label>
+                                        <input
+                                            {...register(`experience.${index}.skills`)}
+                                            className={styles.formInput}
+                                            placeholder="React, Node.js, AWS (comma separated)"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                onClick={addExperience}
+                                className={styles.addButton}
+                            >
+                                <Plus size={16} />
+                                Add Experience
+                            </button>
+                        </div>
+                    </motion.div>
+                );
+
+            case 6:
+                return (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={styles.stepContent}
+                    >
+                        <div className={styles.sectionHeader}>
+                            <h3>Desired Job Roles</h3>
+                            <p>Add the job roles you're interested in - at least one is required</p>
+                        </div>
+
+                        <div className={styles.jobRolesContainer}>
+                            <div className={styles.skillInputContainer}>
+                                <input
+                                    type="text"
+                                    placeholder="Add desired job role"
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addJobRole(e.target.value);
+                                            e.target.value = '';
+                                        }
+                                    }}
+                                    className={styles.skillInput}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        const input = e.target.previousElementSibling;
+                                        addJobRole(input.value);
+                                        input.value = '';
+                                    }}
+                                    className={styles.addSkillButton}
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+
+                            <div className={styles.skillsList}>
+                                {(getValues('desiredJobRoles') || []).map((role, index) => (
+                                    <div key={index} className={styles.skillItem}>
+                                        <span className={styles.skillName}>{role}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeJobRole(index)}
+                                            className={styles.removeSkillButton}
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {errors.desiredJobRoles && (
+                            <p className={styles.errorText}>At least one job role is required</p>
+                        )}
+                    </motion.div>
+                );
+
             default:
-                return null;
+                return (
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={styles.stepContent}
+                    >
+                        <div className={styles.sectionHeader}>
+                            <h3>{steps[currentStep - 1]?.title}</h3>
+                            <p>This section is optional - you can skip it if you don't have any {steps[currentStep - 1]?.title.toLowerCase()} to add.</p>
+                        </div>
+                        <div className={styles.placeholderContent}>
+                            <p>Content for {steps[currentStep - 1]?.title} will be implemented in the next update.</p>
+                        </div>
+                    </motion.div>
+                );
         }
     };
+
+    // Show loading spinner while loading profile progress
+    if (isLoadingProgress) {
+        return (
+            <div className={styles.profileCreationPage}>
+                <div className={styles.profileContainer}>
+                    <div className={styles.loadingContainer}>
+                        <LoadingSpinner size="lg" />
+                        <p>Loading your profile progress...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.profileCreationPage}>
@@ -474,22 +1284,29 @@ const ProfileCreationPage = () => {
                     </div>
 
                     {/* Progress Steps */}
-                    <div className="flex items-center justify-center mb-8">
+                    <div className={styles.progressContainer}>
                         {steps.map((step, index) => {
                             const Icon = step.icon;
                             const isActive = currentStep === step.number;
-                            const isCompleted = currentStep > step.number;
+
+                            // Map step titles to completion status keys
+                            const stepKeyMap = {
+                                'Basic Details': 'basicDetails',
+                                'Skills': 'skills',
+                                'Projects': 'projects',
+                                'Certificates': 'certificates',
+                                'Experience': 'experience',
+                                'Job Roles': 'jobRoles'
+                            };
+
+                            const stepKey = stepKeyMap[step.title];
+                            const isCompleted = profileProgress?.completionStatus?.[stepKey] || currentStep > step.number;
 
                             return (
-                                <div key={step.number} className="flex items-center">
-                                    <div className="flex flex-col items-center">
+                                <div key={step.number} className={styles.progressStep}>
+                                    <div className={styles.stepIconContainer}>
                                         <div
-                                            className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors ${isCompleted
-                                                ? 'bg-green-500 border-green-500 text-white'
-                                                : isActive
-                                                    ? 'bg-primary border-primary text-white'
-                                                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'
-                                                }`}
+                                            className={`${styles.stepIcon} ${isCompleted ? styles.completed : ''} ${isActive ? styles.active : ''}`}
                                         >
                                             {isCompleted ? (
                                                 <CheckCircle size={20} />
@@ -497,62 +1314,96 @@ const ProfileCreationPage = () => {
                                                 <Icon size={20} />
                                             )}
                                         </div>
-                                        <span className={`mt-2 text-sm font-medium ${isActive ? 'text-primary' : 'text-gray-500'
-                                            }`}>
+                                        <span className={`${styles.stepLabel} ${isActive ? styles.active : ''}`}>
                                             {step.title}
                                         </span>
+                                        {step.required && <span className={styles.requiredBadge}>Required</span>}
                                     </div>
                                     {index < steps.length - 1 && (
-                                        <div className={`w-16 h-0.5 mx-4 ${isCompleted ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
-                                            }`} />
+                                        <div className={`${styles.progressLine} ${isCompleted ? styles.completed : ''}`} />
                                     )}
                                 </div>
                             );
                         })}
                     </div>
 
+                    {/* Progress Summary */}
+                    {profileProgress && (
+                        <div className={styles.progressSummary}>
+                            <div className={styles.progressBar}>
+                                <div
+                                    className={styles.progressFill}
+                                    style={{ width: `${profileProgress.completionPercentage}%` }}
+                                />
+                            </div>
+                            <p className={styles.progressText}>
+                                Profile {profileProgress.completionPercentage}% Complete
+                                {profileProgress.lastCompletedStep > 0 && (
+                                    <span> • Last completed: Step {profileProgress.lastCompletedStep}</span>
+                                )}
+                                {isSaving && <span> • Saving...</span>}
+                            </p>
+                        </div>
+                    )}
+
+
                     {/* Form */}
-                    <div className="card p-8">
+                    <div className={styles.profileCard}>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             {renderStepContent()}
 
+
                             {/* Navigation Buttons */}
-                            <div className="flex justify-between mt-8">
+                            <div className={styles.navigationButtons}>
                                 <button
                                     type="button"
                                     onClick={prevStep}
                                     disabled={currentStep === 1}
-                                    className="btn btn-outline flex items-center gap-2"
+                                    className={`${styles.navButton} ${styles.prevButton}`}
                                 >
                                     <ArrowLeft size={16} />
                                     Previous
                                 </button>
 
-                                {currentStep < steps.length ? (
-                                    <button
-                                        type="button"
-                                        onClick={nextStep}
-                                        className="btn btn-primary flex items-center gap-2"
-                                    >
-                                        Next
-                                        <ArrowRight size={16} />
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="btn btn-primary flex items-center gap-2"
-                                    >
-                                        {isLoading ? (
-                                            <LoadingSpinner size="sm" />
-                                        ) : (
-                                            <>
-                                                Complete Profile
-                                                <CheckCircle size={16} />
-                                            </>
-                                        )}
-                                    </button>
-                                )}
+                                <div className={styles.rightButtons}>
+                                    {!steps[currentStep - 1].required && currentStep < steps.length && (
+                                        <button
+                                            type="button"
+                                            onClick={skipStep}
+                                            className={`${styles.navButton} ${styles.skipButton}`}
+                                        >
+                                            <SkipForward size={16} />
+                                            Skip
+                                        </button>
+                                    )}
+
+                                    {currentStep < steps.length ? (
+                                        <button
+                                            type="button"
+                                            onClick={nextStep}
+                                            disabled={!canProceed()}
+                                            className={`${styles.navButton} ${styles.nextButton} ${!canProceed() ? styles.disabled : ''}`}
+                                        >
+                                            Next
+                                            <ArrowRight size={16} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="submit"
+                                            disabled={isLoading || !canProceed()}
+                                            className={`${styles.navButton} ${styles.submitButton} ${isLoading ? styles.loading : ''}`}
+                                        >
+                                            {isLoading ? (
+                                                <LoadingSpinner size="sm" />
+                                            ) : (
+                                                <>
+                                                    Complete Profile
+                                                    <CheckCircle size={16} />
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </form>
                     </div>
