@@ -10,8 +10,6 @@ dotenv.config();
 // Import routes
 const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
-const certificateRoutes = require('./routes/certificates');
-const testRoutes = require('./routes/tests');
 const aiRoutes = require('./routes/ai');
 
 const app = express();
@@ -40,8 +38,6 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/certificates', certificateRoutes);
-app.use('/api/tests', testRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Health check endpoint

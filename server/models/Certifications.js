@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const certificateSchema = new mongoose.Schema({
+const certificationSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -16,38 +16,24 @@ const certificateSchema = new mongoose.Schema({
         trim: true
     }],
     startDate: {
-        type: Date
+        type: Date,
+        required: true
     },
     endDate: {
         type: Date
-    },
-    credentialId: {
-        type: String,
-        trim: true
-    },
-    verificationUrl: {
-        type: String,
-        trim: true
-    },
-    image: {
-        type: String,
-        default: ''
     }
 });
 
-const certificatesSchema = new mongoose.Schema({
+const certificationsSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         unique: true
     },
-    certificates: [certificateSchema]
+    certifications: [certificationSchema]
 }, {
     timestamps: true
 });
 
-// Index for faster queries
-certificatesSchema.index({ user: 1 });
-
-module.exports = mongoose.model('Certificates', certificatesSchema);
+module.exports = mongoose.model('Certifications', certificationsSchema);

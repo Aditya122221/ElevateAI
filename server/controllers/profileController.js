@@ -1,147 +1,15 @@
-const Profile = require('../models/Profile');
+// Profile model removed - using section-based approach
 const BasicDetails = require('../models/BasicDetails');
 const Skills = require('../models/Skills');
 const Projects = require('../models/Projects');
-const Certificates = require('../models/Certificates');
+const Certifications = require('../models/Certifications');
 const Experience = require('../models/Experience');
 const JobRoles = require('../models/JobRoles');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
-const { uploadProfilePicture, uploadProjectImage, uploadCertificateImage } = require('../services/cloudinaryService');
+const { uploadProfilePicture, uploadProjectImage } = require('../services/cloudinaryService');
 
-// @desc    Create or update user profile (legacy endpoint)
-// @access  Private
-const createOrUpdateProfile = async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const profileData = req.body;
-        profileData.user = req.user.id;
-
-        // Check if profile already exists
-        let profile = await Profile.findOne({ user: req.user.id });
-
-        if (profile) {
-            // Update existing profile
-            profile = await Profile.findOneAndUpdate(
-                { user: req.user.id },
-                { $set: profileData },
-                { new: true, runValidators: true }
-            );
-        } else {
-            // Create new profile
-            profile = new Profile(profileData);
-            await profile.save();
-        }
-
-        // Update user's profile reference and completion status
-        await User.findByIdAndUpdate(req.user.id, {
-            profile: profile._id,
-            isProfileComplete: true
-        });
-
-        res.json({
-            message: 'Profile saved successfully',
-            profile
-        });
-    } catch (error) {
-        console.error('Profile save error:', error);
-        res.status(500).json({ message: 'Server error while saving profile' });
-    }
-};
-
-// @desc    Get user profile
-// @access  Private
-const getUserProfile = async (req, res) => {
-    try {
-        const profile = await Profile.findOne({ user: req.user.id })
-            .populate('user', 'name email');
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found' });
-        }
-
-        res.json({ profile });
-    } catch (error) {
-        console.error('Profile fetch error:', error);
-        res.status(500).json({ message: 'Server error while fetching profile' });
-    }
-};
-
-// @desc    Update user profile
-// @access  Private
-const updateProfile = async (req, res) => {
-    try {
-        const profile = await Profile.findOneAndUpdate(
-            { user: req.user.id },
-            { $set: req.body },
-            { new: true, runValidators: true }
-        );
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found' });
-        }
-
-        res.json({
-            message: 'Profile updated successfully',
-            profile
-        });
-    } catch (error) {
-        console.error('Profile update error:', error);
-        res.status(500).json({ message: 'Server error while updating profile' });
-    }
-};
-
-// @desc    Delete user profile
-// @access  Private
-const deleteProfile = async (req, res) => {
-    try {
-        const profile = await Profile.findOneAndDelete({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found' });
-        }
-
-        // Update user's profile completion status
-        await User.findByIdAndUpdate(req.user.id, {
-            $unset: { profile: 1 },
-            isProfileComplete: false
-        });
-
-        res.json({ message: 'Profile deleted successfully' });
-    } catch (error) {
-        console.error('Profile delete error:', error);
-        res.status(500).json({ message: 'Server error while deleting profile' });
-    }
-};
-
-// @desc    Get AI recommendations for user
-// @access  Private
-const getRecommendations = async (req, res) => {
-    try {
-        const profile = await Profile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found. Please complete your profile first.' });
-        }
-
-        // Return existing recommendations or empty array
-        const recommendations = profile.aiRecommendations || {
-            suggestedSkills: [],
-            suggestedCertifications: [],
-            careerPath: [],
-            lastUpdated: null
-        };
-
-        res.json({ recommendations });
-    } catch (error) {
-        console.error('Recommendations fetch error:', error);
-        res.status(500).json({ message: 'Server error while fetching recommendations' });
-    }
-};
+// ==================== BASIC DETAILS ====================
 
 // @desc    Save basic details
 // @access  Private
@@ -191,6 +59,8 @@ const getBasicDetails = async (req, res) => {
     }
 };
 
+// ==================== SKILLS ====================
+
 // @desc    Save skills
 // @access  Private
 const saveSkills = async (req, res) => {
@@ -238,6 +108,8 @@ const getSkills = async (req, res) => {
         res.status(500).json({ message: 'Server error while fetching skills' });
     }
 };
+
+// ==================== PROJECTS ====================
 
 // @desc    Save projects
 // @access  Private
@@ -287,53 +159,57 @@ const getProjects = async (req, res) => {
     }
 };
 
-// @desc    Save certificates
+// ==================== CERTIFICATIONS ====================
+
+// @desc    Save certifications
 // @access  Private
-const saveCertificates = async (req, res) => {
+const saveCertifications = async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const certificatesData = req.body;
-        certificatesData.user = req.user.id;
+        const certificationsData = req.body;
+        certificationsData.user = req.user.id;
 
-        let certificates = await Certificates.findOne({ user: req.user.id });
+        let certifications = await Certifications.findOne({ user: req.user.id });
 
-        if (certificates) {
-            certificates = await Certificates.findOneAndUpdate(
+        if (certifications) {
+            certifications = await Certifications.findOneAndUpdate(
                 { user: req.user.id },
-                { $set: certificatesData },
+                { $set: certificationsData },
                 { new: true, runValidators: true }
             );
         } else {
-            certificates = new Certificates(certificatesData);
-            await certificates.save();
+            certifications = new Certifications(certificationsData);
+            await certifications.save();
         }
 
         res.json({
-            message: 'Certificates saved successfully',
-            data: certificates
+            message: 'Certifications saved successfully',
+            data: certifications
         });
     } catch (error) {
-        console.error('Certificates save error:', error);
-        res.status(500).json({ message: 'Server error while saving certificates' });
+        console.error('Certifications save error:', error);
+        res.status(500).json({ message: 'Server error while saving certifications' });
     }
 };
 
-// @desc    Get certificates
+// @desc    Get certifications
 // @access  Private
-const getCertificates = async (req, res) => {
+const getCertifications = async (req, res) => {
     try {
-        const certificates = await Certificates.findOne({ user: req.user.id });
+        const certifications = await Certifications.findOne({ user: req.user.id });
 
-        res.json({ data: certificates });
+        res.json({ data: certifications });
     } catch (error) {
-        console.error('Certificates fetch error:', error);
-        res.status(500).json({ message: 'Server error while fetching certificates' });
+        console.error('Certifications fetch error:', error);
+        res.status(500).json({ message: 'Server error while fetching certifications' });
     }
 };
+
+// ==================== EXPERIENCE ====================
 
 // @desc    Save experience
 // @access  Private
@@ -383,6 +259,8 @@ const getExperience = async (req, res) => {
     }
 };
 
+// ==================== JOB ROLES ====================
+
 // @desc    Save job roles
 // @access  Private
 const saveJobRoles = async (req, res) => {
@@ -431,16 +309,18 @@ const getJobRoles = async (req, res) => {
     }
 };
 
+// ==================== PROFILE COMPLETION ====================
+
 // @desc    Complete profile by combining all sections
 // @access  Private
 const completeProfile = async (req, res) => {
     try {
         // Get all sections data
-        const [basicDetails, skills, projects, certificates, experience, jobRoles] = await Promise.allSettled([
+        const [basicDetails, skills, projects, certifications, experience, jobRoles] = await Promise.allSettled([
             BasicDetails.findOne({ user: req.user.id }),
             Skills.findOne({ user: req.user.id }),
             Projects.findOne({ user: req.user.id }),
-            Certificates.findOne({ user: req.user.id }),
+            Certifications.findOne({ user: req.user.id }),
             Experience.findOne({ user: req.user.id }),
             JobRoles.findOne({ user: req.user.id })
         ]);
@@ -467,56 +347,22 @@ const completeProfile = async (req, res) => {
             });
         }
 
-        // Create or update the main Profile document
-        const profileData = {
-            user: req.user.id,
-            basicDetails: {
-                firstName: basicDetails.value.firstName,
-                lastName: basicDetails.value.lastName,
-                email: basicDetails.value.email,
-                phone: basicDetails.value.phone,
-                linkedin: basicDetails.value.linkedin,
-                github: basicDetails.value.github,
-                profilePicture: basicDetails.value.profilePicture || '',
-                twitter: basicDetails.value.twitter || '',
-                website: basicDetails.value.website || '',
-                portfolio: basicDetails.value.portfolio || '',
-                bio: basicDetails.value.bio || ''
-            },
-            skills: {
-                languages: skills.value.languages || [],
-                technologies: skills.value.technologies || [],
-                frameworks: skills.value.frameworks || [],
-                tools: skills.value.tools || [],
-                softSkills: skills.value.softSkills || []
-            },
-            projects: projects.value?.projects || [],
-            certificates: certificates.value?.certificates || [],
-            experience: experience.value?.experiences || [],
-            desiredJobRoles: jobRoles.value.desiredJobRoles || []
-        };
-
-        let profile = await Profile.findOne({ user: req.user.id });
-        if (profile) {
-            profile = await Profile.findOneAndUpdate(
-                { user: req.user.id },
-                { $set: profileData },
-                { new: true, runValidators: true }
-            );
-        } else {
-            profile = new Profile(profileData);
-            await profile.save();
-        }
-
-        // Update user's profile completion status
+        // All section data is already saved in individual collections
+        // Just update user's profile completion status
         await User.findByIdAndUpdate(req.user.id, {
-            profile: profile._id,
             isProfileComplete: true
         });
 
         res.json({
             message: 'Profile completed successfully',
-            profile
+            sections: {
+                basicDetails: !!basicDetails.value,
+                skills: !!skills.value,
+                projects: !!projects.value,
+                certifications: !!certifications.value,
+                experience: !!experience.value,
+                jobRoles: !!jobRoles.value
+            }
         });
     } catch (error) {
         console.error('Profile completion error:', error);
@@ -534,12 +380,14 @@ const completeProfile = async (req, res) => {
     }
 };
 
+// ==================== IMAGE UPLOADS ====================
+
 // @desc    Upload profile picture
 // @access  Private
 const uploadProfilePictureController = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
+            return res.status(400).json({ message: 'No image file provided' });
         }
 
         const result = await uploadProfilePicture(req.file);
@@ -559,7 +407,7 @@ const uploadProfilePictureController = async (req, res) => {
 const uploadProjectImageController = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
+            return res.status(400).json({ message: 'No image file provided' });
         }
 
         const result = await uploadProjectImage(req.file);
@@ -574,46 +422,37 @@ const uploadProjectImageController = async (req, res) => {
     }
 };
 
-// @desc    Upload certificate image
-// @access  Private
-const uploadCertificateImageController = async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded' });
-        }
-
-        const result = await uploadCertificateImage(req.file);
-
-        res.json({
-            message: 'Certificate image uploaded successfully',
-            imageUrl: result.secure_url
-        });
-    } catch (error) {
-        console.error('Certificate image upload error:', error);
-        res.status(500).json({ message: 'Server error while uploading certificate image' });
-    }
-};
+// Certificate image upload removed
 
 module.exports = {
-    createOrUpdateProfile,
-    getUserProfile,
-    updateProfile,
-    deleteProfile,
-    getRecommendations,
+    // Basic Details
     saveBasicDetails,
     getBasicDetails,
+
+    // Skills
     saveSkills,
     getSkills,
+
+    // Projects
     saveProjects,
     getProjects,
-    saveCertificates,
-    getCertificates,
+
+    // Certifications
+    saveCertifications,
+    getCertifications,
+
+    // Experience
     saveExperience,
     getExperience,
+
+    // Job Roles
     saveJobRoles,
     getJobRoles,
+
+    // Profile Completion
     completeProfile,
+
+    // Image Uploads
     uploadProfilePictureController,
-    uploadProjectImageController,
-    uploadCertificateImageController
+    uploadProjectImageController
 };

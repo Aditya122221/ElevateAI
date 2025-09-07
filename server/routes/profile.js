@@ -1,21 +1,16 @@
 const express = require('express');
 const { body } = require('express-validator');
 const { auth } = require('../middleware/auth');
-const { uploadProfilePicture, uploadProjectImage, uploadCertificateImage } = require('../services/cloudinaryService');
+const { uploadProfilePicture, uploadProjectImage } = require('../services/cloudinaryService');
 const {
-    createOrUpdateProfile,
-    getUserProfile,
-    updateProfile,
-    deleteProfile,
-    getRecommendations,
     saveBasicDetails,
     getBasicDetails,
     saveSkills,
     getSkills,
     saveProjects,
     getProjects,
-    saveCertificates,
-    getCertificates,
+    saveCertifications,
+    getCertifications,
     saveExperience,
     getExperience,
     saveJobRoles,
@@ -23,59 +18,11 @@ const {
     completeProfile,
     uploadProfilePictureController,
     uploadProjectImageController,
-    uploadCertificateImageController
 } = require('../controllers/profileController');
 
 const router = express.Router();
 
-// @route   POST /api/profile
-// @desc    Create or update user profile
-// @access  Private
-router.post('/', auth, [
-    // Basic Details validation
-    body('basicDetails.firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
-    body('basicDetails.lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
-    body('basicDetails.email').isEmail().withMessage('Valid email is required'),
-    body('basicDetails.phone').trim().isLength({ min: 1 }).withMessage('Phone number is required'),
-    body('basicDetails.linkedin').trim().isLength({ min: 1 }).withMessage('LinkedIn profile is required'),
-    body('basicDetails.github').trim().isLength({ min: 1 }).withMessage('GitHub profile is required'),
-
-    // Skills validation - at least one skill category must have skills
-    body('skills').custom((skills) => {
-        const hasSkills = skills.languages?.length > 0 ||
-            skills.technologies?.length > 0 ||
-            skills.frameworks?.length > 0 ||
-            skills.tools?.length > 0 ||
-            skills.softSkills?.length > 0;
-        if (!hasSkills) {
-            throw new Error('At least one skill is required');
-        }
-        return true;
-    }),
-
-    // Job Roles validation
-    body('desiredJobRoles').isArray({ min: 1 }).withMessage('At least one job role is required')
-], createOrUpdateProfile);
-
-// @route   GET /api/profile
-// @desc    Get user profile
-// @access  Private
-router.get('/', auth, getUserProfile);
-
-// @route   PUT /api/profile
-// @desc    Update user profile
-// @access  Private
-router.put('/', auth, updateProfile);
-
-// @route   DELETE /api/profile
-// @desc    Delete user profile
-// @access  Private
-router.delete('/', auth, deleteProfile);
-
-// @route   GET /api/profile/recommendations
-// @desc    Get AI recommendations for user
-// @access  Private
-router.get('/recommendations', auth, getRecommendations);
+// Legacy profile routes removed - using section-based approach
 
 // @route   POST /api/profile/upload-profile-picture
 // @desc    Upload profile picture
@@ -87,10 +34,7 @@ router.post('/upload-profile-picture', auth, uploadProfilePicture.single('profil
 // @access  Private
 router.post('/upload-project-image', auth, uploadProjectImage.single('projectImage'), uploadProjectImageController);
 
-// @route   POST /api/profile/upload-certificate-image
-// @desc    Upload certificate image
-// @access  Private
-router.post('/upload-certificate-image', auth, uploadCertificateImage.single('certificateImage'), uploadCertificateImageController);
+// Certificate image upload route removed
 
 // @route   POST /api/profile/save-progress
 // @desc    Save profile progress (checkpoint)
@@ -241,15 +185,20 @@ router.post('/projects', auth, [
 // @access  Private
 router.get('/projects', auth, getProjects);
 
-// @route   POST /api/profile/certificates
-// @desc    Save certificates section
+// @route   POST /api/profile/certifications
+// @desc    Save certifications section
 // @access  Private
-router.post('/certificates', auth, saveCertificates);
+router.post('/certifications', auth, [
+    body('certifications').isArray().withMessage('Certifications must be an array'),
+    body('certifications.*.name').notEmpty().withMessage('Certification name is required'),
+    body('certifications.*.platform').notEmpty().withMessage('Platform is required'),
+    body('certifications.*.startDate').isISO8601().withMessage('Valid start date is required')
+], saveCertifications);
 
-// @route   GET /api/profile/certificates
-// @desc    Get certificates section
+// @route   GET /api/profile/certifications
+// @desc    Get certifications section
 // @access  Private
-router.get('/certificates', auth, getCertificates);
+router.get('/certifications', auth, getCertifications);
 
 // @route   POST /api/profile/experience
 // @desc    Save experience section

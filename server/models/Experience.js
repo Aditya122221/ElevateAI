@@ -48,7 +48,4 @@ const experiencesSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-experiencesSchema.index({ user: 1 });
-
 module.exports = mongoose.model('Experience', experiencesSchema);

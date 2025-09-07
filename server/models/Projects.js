@@ -47,7 +47,4 @@ const projectsSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-projectsSchema.index({ user: 1 });
-
 module.exports = mongoose.model('Projects', projectsSchema);

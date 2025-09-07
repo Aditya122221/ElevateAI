@@ -31,7 +31,4 @@ const skillsSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-skillsSchema.index({ user: 1 });
-
 module.exports = mongoose.model('Skills', skillsSchema);

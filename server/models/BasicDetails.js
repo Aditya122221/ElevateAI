@@ -66,7 +66,4 @@ const basicDetailsSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-basicDetailsSchema.index({ user: 1 });
-
 module.exports = mongoose.model('BasicDetails', basicDetailsSchema);

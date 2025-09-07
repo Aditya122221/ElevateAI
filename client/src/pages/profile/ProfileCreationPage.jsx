@@ -64,7 +64,7 @@ const ProfileCreationPage = () => {
                 softSkills: []
             },
             projects: [],
-            certificates: [],
+            certifications: [],
             experience: [],
             desiredJobRoles: []
         }
@@ -74,7 +74,7 @@ const ProfileCreationPage = () => {
         { number: 1, title: 'Basic Details', icon: User, required: true },
         { number: 2, title: 'Skills', icon: Code, required: true },
         { number: 3, title: 'Projects', icon: FolderOpen, required: false },
-        { number: 4, title: 'Certificates', icon: Award, required: false },
+        { number: 4, title: 'Certifications', icon: Award, required: false },
         { number: 5, title: 'Experience', icon: Briefcase, required: false },
         { number: 6, title: 'Job Roles', icon: Users, required: true }
     ];
@@ -85,14 +85,22 @@ const ProfileCreationPage = () => {
     useEffect(() => {
         const loadAllSections = async () => {
             try {
+                // Only load if user is authenticated
+                if (!user) {
+                    console.log('No user found, skipping profile data load');
+                    setIsLoadingProgress(false);
+                    return;
+                }
+
+                console.log('Loading profile data for user:', user);
                 setIsLoadingProgress(true);
 
                 // Fetch all sections in parallel
-                const [basicDetailsRes, skillsRes, projectsRes, certificatesRes, experienceRes, jobRolesRes] = await Promise.allSettled([
+                const [basicDetailsRes, skillsRes, projectsRes, certificationsRes, experienceRes, jobRolesRes] = await Promise.allSettled([
                     axios.get('/api/profile/basic-details'),
                     axios.get('/api/profile/skills'),
                     axios.get('/api/profile/projects'),
-                    axios.get('/api/profile/certificates'),
+                    axios.get('/api/profile/certifications'),
                     axios.get('/api/profile/experience'),
                     axios.get('/api/profile/job-roles')
                 ]);
@@ -120,7 +128,7 @@ const ProfileCreationPage = () => {
                         softSkills: []
                     },
                     projects: projectsRes.status === 'fulfilled' && projectsRes.value.data.data ? projectsRes.value.data.data.projects || [] : [],
-                    certificates: certificatesRes.status === 'fulfilled' && certificatesRes.value.data.data ? certificatesRes.value.data.data.certificates || [] : [],
+                    certifications: certificationsRes.status === 'fulfilled' && certificationsRes.value.data.data ? certificationsRes.value.data.data.certifications || [] : [],
                     experience: experienceRes.status === 'fulfilled' && experienceRes.value.data.data ? experienceRes.value.data.data.experiences || [] : [],
                     desiredJobRoles: jobRolesRes.status === 'fulfilled' && jobRolesRes.value.data.data ? jobRolesRes.value.data.data.desiredJobRoles || [] : []
                 };
@@ -138,7 +146,7 @@ const ProfileCreationPage = () => {
                 if (startStep === 3 && formData.projects.length > 0) {
                     startStep = 4;
                 }
-                if (startStep === 4 && formData.certificates.length > 0) {
+                if (startStep === 4 && formData.certifications.length > 0) {
                     startStep = 5;
                 }
                 if (startStep === 5 && formData.experience.length > 0) {
@@ -260,24 +268,51 @@ const ProfileCreationPage = () => {
 
 
 
-    // Certificate management functions
-    const addCertificate = () => {
-        const currentCertificates = getValues('certificates') || [];
-        setValue('certificates', [...currentCertificates, {
+    // Certification management functions
+    const addCertification = () => {
+        const currentCertifications = getValues('certifications') || [];
+        setValue('certifications', [...currentCertifications, {
             name: '',
             platform: '',
             skills: [],
             startDate: '',
-            endDate: '',
-            credentialId: '',
-            verificationUrl: '',
-            certificateUrl: ''
+            endDate: ''
         }]);
     };
 
-    const removeCertificate = (index) => {
-        const currentCertificates = getValues('certificates') || [];
-        setValue('certificates', currentCertificates.filter((_, i) => i !== index));
+    const removeCertification = (index) => {
+        const currentCertifications = getValues('certifications') || [];
+        setValue('certifications', currentCertifications.filter((_, i) => i !== index));
+    };
+
+    const addCertificationSkill = (certIndex) => {
+        const currentCertifications = getValues('certifications') || [];
+        const updatedCertifications = [...currentCertifications];
+        updatedCertifications[certIndex] = {
+            ...updatedCertifications[certIndex],
+            skills: [...(updatedCertifications[certIndex].skills || []), '']
+        };
+        setValue('certifications', updatedCertifications);
+    };
+
+    const removeCertificationSkill = (certIndex, skillIndex) => {
+        const currentCertifications = getValues('certifications') || [];
+        const updatedCertifications = [...currentCertifications];
+        updatedCertifications[certIndex] = {
+            ...updatedCertifications[certIndex],
+            skills: updatedCertifications[certIndex].skills.filter((_, i) => i !== skillIndex)
+        };
+        setValue('certifications', updatedCertifications);
+    };
+
+    const updateCertificationSkill = (certIndex, skillIndex, value) => {
+        const currentCertifications = getValues('certifications') || [];
+        const updatedCertifications = [...currentCertifications];
+        updatedCertifications[certIndex] = {
+            ...updatedCertifications[certIndex],
+            skills: updatedCertifications[certIndex].skills.map((skill, i) => i === skillIndex ? value : skill)
+        };
+        setValue('certifications', updatedCertifications);
     };
 
     // Experience management functions
@@ -357,9 +392,9 @@ const ProfileCreationPage = () => {
                     endpoint = '/api/profile/projects';
                     dataToSave = { projects: formData.projects };
                     break;
-                case 4: // Certificates
-                    endpoint = '/api/profile/certificates';
-                    dataToSave = { certificates: formData.certificates };
+                case 4: // Certifications
+                    endpoint = '/api/profile/certifications';
+                    dataToSave = { certifications: formData.certifications };
                     break;
                 case 5: // Experience
                     endpoint = '/api/profile/experience';
@@ -398,8 +433,8 @@ const ProfileCreationPage = () => {
                 case 3: // Projects
                     endpoint = '/api/profile/projects';
                     break;
-                case 4: // Certificates
-                    endpoint = '/api/profile/certificates';
+                case 4: // Certifications
+                    endpoint = '/api/profile/certifications';
                     break;
                 case 5: // Experience
                     endpoint = '/api/profile/experience';
@@ -426,8 +461,8 @@ const ProfileCreationPage = () => {
                     case 3: // Projects
                         setValue('projects', sectionData.projects || []);
                         break;
-                    case 4: // Certificates
-                        setValue('certificates', sectionData.certificates || []);
+                    case 4: // Certifications
+                        setValue('certifications', sectionData.certifications || []);
                         break;
                     case 5: // Experience
                         setValue('experience', sectionData.experiences || []);
@@ -957,18 +992,18 @@ const ProfileCreationPage = () => {
                         className={styles.stepContent}
                     >
                         <div className={styles.sectionHeader}>
-                            <h3>Certificates</h3>
+                            <h3>Certifications</h3>
                             <p>Add your certifications and achievements - this section is optional</p>
                         </div>
 
-                        <div className={styles.certificatesContainer}>
-                            {(getValues('certificates') || []).map((certificate, index) => (
-                                <div key={index} className={styles.certificateCard}>
-                                    <div className={styles.certificateHeader}>
-                                        <h4>Certificate {index + 1}</h4>
+                        <div className={styles.certificationsContainer}>
+                            {(getValues('certifications') || []).map((certification, index) => (
+                                <div key={index} className={styles.certificationCard}>
+                                    <div className={styles.certificationHeader}>
+                                        <h4>Certification {index + 1}</h4>
                                         <button
                                             type="button"
-                                            onClick={() => removeCertificate(index)}
+                                            onClick={() => removeCertification(index)}
                                             className={styles.removeButton}
                                         >
                                             <X size={16} />
@@ -977,27 +1012,27 @@ const ProfileCreationPage = () => {
 
                                     <div className={styles.formGrid}>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Certificate Name *</label>
+                                            <label className={styles.formLabel}>Certification Name *</label>
                                             <input
-                                                {...register(`certificates.${index}.name`)}
+                                                {...register(`certifications.${index}.name`, { required: true })}
                                                 className={styles.formInput}
-                                                placeholder="Enter certificate name"
+                                                placeholder="Enter certification name"
                                             />
                                         </div>
 
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>Platform/Issuer *</label>
                                             <input
-                                                {...register(`certificates.${index}.platform`)}
+                                                {...register(`certifications.${index}.platform`, { required: true })}
                                                 className={styles.formInput}
                                                 placeholder="e.g., Coursera, Google, Microsoft"
                                             />
                                         </div>
 
                                         <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Start Date</label>
+                                            <label className={styles.formLabel}>Start Date *</label>
                                             <input
-                                                {...register(`certificates.${index}.startDate`)}
+                                                {...register(`certifications.${index}.startDate`, { required: true })}
                                                 type="date"
                                                 className={styles.formInput}
                                             />
@@ -1006,49 +1041,54 @@ const ProfileCreationPage = () => {
                                         <div className={styles.formGroup}>
                                             <label className={styles.formLabel}>End Date</label>
                                             <input
-                                                {...register(`certificates.${index}.endDate`)}
+                                                {...register(`certifications.${index}.endDate`)}
                                                 type="date"
                                                 className={styles.formInput}
-                                            />
-                                        </div>
-
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Credential ID</label>
-                                            <input
-                                                {...register(`certificates.${index}.credentialId`)}
-                                                className={styles.formInput}
-                                                placeholder="Certificate ID or verification code"
-                                            />
-                                        </div>
-
-                                        <div className={styles.formGroup}>
-                                            <label className={styles.formLabel}>Verification URL</label>
-                                            <input
-                                                {...register(`certificates.${index}.verificationUrl`)}
-                                                className={styles.formInput}
-                                                placeholder="https://verify.certificate.com/..."
                                             />
                                         </div>
                                     </div>
 
                                     <div className={styles.formGroup}>
                                         <label className={styles.formLabel}>Skills Covered</label>
-                                        <input
-                                            {...register(`certificates.${index}.skills`)}
-                                            className={styles.formInput}
-                                            placeholder="JavaScript, React, AWS (comma separated)"
-                                        />
+                                        <div className={styles.skillTagsContainer}>
+                                            {(certification.skills || []).map((skill, skillIndex) => (
+                                                <div key={skillIndex} className={styles.skillTag}>
+                                                    <input
+                                                        type="text"
+                                                        value={skill}
+                                                        onChange={(e) => updateCertificationSkill(index, skillIndex, e.target.value)}
+                                                        className={styles.skillInput}
+                                                        placeholder="Enter skill"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCertificationSkill(index, skillIndex)}
+                                                        className={styles.removeSkillButton}
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => addCertificationSkill(index)}
+                                                className={styles.addSkillButton}
+                                            >
+                                                <Plus size={14} />
+                                                Add Skill
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
 
                             <button
                                 type="button"
-                                onClick={addCertificate}
+                                onClick={addCertification}
                                 className={styles.addButton}
                             >
                                 <Plus size={16} />
-                                Add Certificate
+                                Add Certification
                             </button>
                         </div>
                     </motion.div>
@@ -1294,7 +1334,7 @@ const ProfileCreationPage = () => {
                                 'Basic Details': 'basicDetails',
                                 'Skills': 'skills',
                                 'Projects': 'projects',
-                                'Certificates': 'certificates',
+                                'Certifications': 'certifications',
                                 'Experience': 'experience',
                                 'Job Roles': 'jobRoles'
                             };

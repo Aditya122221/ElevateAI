@@ -23,8 +23,10 @@ export const AuthProvider = ({ children }) => {
     // Set up axios defaults
     useEffect(() => {
         if (token) {
+            console.log('Setting axios authorization header with token:', token.substring(0, 20) + '...');
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         } else {
+            console.log('Removing axios authorization header');
             delete axios.defaults.headers.common['Authorization'];
         }
     }, [token]);
@@ -34,6 +36,7 @@ export const AuthProvider = ({ children }) => {
         const checkAuth = async () => {
             if (token) {
                 try {
+                    console.log('Checking auth with token:', token.substring(0, 20) + '...');
                     const response = await axios.get('/api/auth/me');
                     console.log('User data from server:', response.data.user);
                     setUser(response.data.user);
@@ -42,6 +45,8 @@ export const AuthProvider = ({ children }) => {
                     localStorage.removeItem('token');
                     setToken(null);
                 }
+            } else {
+                console.log('No token found, user not authenticated');
             }
             setLoading(false);
         };
@@ -59,6 +64,9 @@ export const AuthProvider = ({ children }) => {
             localStorage.setItem('token', newToken);
             setToken(newToken);
             setUser(userData);
+
+            // Set axios headers immediately
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
 
             toast.success('Login successful!');
             return { success: true, user: userData };

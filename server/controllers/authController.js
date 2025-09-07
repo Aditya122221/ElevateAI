@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
-const Profile = require('../models/Profile');
 const EmailVerification = require('../models/EmailVerification');
 const emailService = require('../services/emailService');
 
@@ -102,8 +101,7 @@ const login = async (req, res) => {
 const getCurrentUser = async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
-            .select('-password')
-            .populate('profile');
+            .select('-password');
 
         res.json({ user });
     } catch (error) {

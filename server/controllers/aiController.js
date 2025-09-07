@@ -1,7 +1,9 @@
 const axios = require('axios');
-const Profile = require('../models/Profile');
-const Certificate = require('../models/Certificate');
-const Test = require('../models/Test');
+const BasicDetails = require('../models/BasicDetails');
+const Skills = require('../models/Skills');
+const Projects = require('../models/Projects');
+const Experience = require('../models/Experience');
+const JobRoles = require('../models/JobRoles');
 
 // Ollama API configuration
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
@@ -18,19 +20,21 @@ const callOllama = async (prompt) => {
             prompt: prompt,
             stream: false
         }, {
-            timeout: 30000 // Increased timeout for AI model processing
+            timeout: 30000 // 30 second timeout
         });
 
-        console.log('Ollama API call successful');
-        return response.data.response;
+        if (response.data && response.data.response) {
+            console.log('Ollama response received successfully');
+            return response.data.response;
+        } else {
+            console.error('Unexpected Ollama response format:', response.data);
+            return null;
+        }
     } catch (error) {
         console.error('Ollama API error:', error.message);
-        console.error('Full error details:', {
-            code: error.code,
-            address: error.address,
-            port: error.port,
-            url: error.config?.url
-        });
+        if (error.code === 'ECONNREFUSED') {
+            console.error('Ollama service is not running. Please start Ollama and try again.');
+        }
         // Return null instead of throwing error to allow graceful fallback
         return null;
     }
@@ -40,9 +44,17 @@ const callOllama = async (prompt) => {
 // @access  Private
 const analyzeProfile = async (req, res) => {
     try {
-        const profile = await Profile.findOne({ user: req.user.id });
+        // Get all sections data
+        const [basicDetails, skills, projects, experience, jobRoles] = await Promise.allSettled([
+            BasicDetails.findOne({ user: req.user.id }),
+            Skills.findOne({ user: req.user.id }),
+            Projects.findOne({ user: req.user.id }),
+            Experience.findOne({ user: req.user.id }),
+            JobRoles.findOne({ user: req.user.id })
+        ]);
 
-        if (!profile) {
+        // Check if required sections exist
+        if (!basicDetails.value || !skills.value || !jobRoles.value) {
             return res.status(404).json({ message: 'Profile not found. Please complete your profile first.' });
         }
 
@@ -51,28 +63,37 @@ const analyzeProfile = async (req, res) => {
     Analyze the following user profile and provide personalized career recommendations:
 
     Personal Information:
-    - Name: ${profile.personalInfo.firstName} ${profile.personalInfo.lastName}
-    - Age: ${profile.personalInfo.age || 'Not specified'}
-    - Location: ${profile.personalInfo.location?.city || 'Not specified'}, ${profile.personalInfo.location?.country || 'Not specified'}
+    - Name: ${basicDetails.value.firstName} ${basicDetails.value.lastName}
+    - Email: ${basicDetails.value.email}
+    - LinkedIn: ${basicDetails.value.linkedin}
+    - GitHub: ${basicDetails.value.github}
+    - Bio: ${basicDetails.value.bio || 'Not specified'}
 
-    Career Information:
-    - Current Role: ${profile.careerInfo.currentRole || 'Not specified'}
-    - Desired Role: ${profile.careerInfo.desiredRole}
-    - Experience Level: ${profile.careerInfo.experienceLevel}
-    - Industry: ${profile.careerInfo.industry || 'Not specified'}
+    Desired Job Roles:
+    - ${jobRoles.value.desiredJobRoles.join(', ')}
 
     Technical Skills:
-    ${profile.skills.technical.map(skill => `- ${skill.name} (${skill.level})`).join('\n') || 'None specified'}
+    - Programming Languages: ${skills.value.languages.join(', ') || 'None specified'}
+    - Technologies: ${skills.value.technologies.join(', ') || 'None specified'}
+    - Frameworks: ${skills.value.frameworks.join(', ') || 'None specified'}
+    - Tools: ${skills.value.tools.join(', ') || 'None specified'}
+    - Soft Skills: ${skills.value.softSkills.join(', ') || 'None specified'}
 
-    Soft Skills:
-    ${profile.skills.soft.map(skill => `- ${skill.name} (${skill.level})`).join('\n') || 'None specified'}
+    Projects:
+    ${projects.value?.projects?.map(project => `
+    - ${project.name}
+      Details: ${project.details.join(', ')}
+      Technologies: ${project.skillsUsed?.join(', ') || 'None specified'}
+      Duration: ${project.startDate} to ${project.endDate || 'Present'}
+    `).join('') || 'No projects specified'}
 
-    Interests:
-    ${profile.interests.join(', ') || 'None specified'}
-
-    Goals:
-    Short-term: ${profile.goals.shortTerm.join(', ') || 'None specified'}
-    Long-term: ${profile.goals.longTerm.join(', ') || 'None specified'}
+    Experience:
+    ${experience.value?.experiences?.map(exp => `
+    - ${exp.position} at ${exp.companyName}
+      Duration: ${exp.startDate} to ${exp.endDate || 'Present'}
+      Skills: ${exp.skills?.join(', ') || 'None specified'}
+      Achievements: ${exp.achievements?.join(', ') || 'None specified'}
+    `).join('') || 'No experience specified'}
 
     Based on this profile, please provide:
     1. 5-7 specific technical skills they should develop to advance in their desired role
@@ -94,9 +115,10 @@ const analyzeProfile = async (req, res) => {
 
         // Try to parse the AI response as JSON
         let recommendations;
+
         if (aiResponse) {
             try {
-                // Extract JSON from the response (in case there's extra text)
+                // Try to extract JSON from the response
                 const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     recommendations = JSON.parse(jsonMatch[0]);
@@ -104,40 +126,74 @@ const analyzeProfile = async (req, res) => {
                     throw new Error('No JSON found in response');
                 }
             } catch (parseError) {
-                console.error('Failed to parse AI response:', parseError);
-                // Fallback recommendations if AI response parsing fails
+                console.error('Failed to parse AI response as JSON:', parseError);
+                console.log('Raw AI response:', aiResponse);
+
+                // Fallback recommendations
                 recommendations = {
-                    suggestedSkills: ['JavaScript', 'React', 'Node.js', 'Database Management', 'Cloud Computing'],
-                    suggestedCertifications: ['AWS Certified Developer', 'Google Cloud Professional', 'Microsoft Azure Fundamentals'],
-                    careerPath: ['Junior Developer', 'Mid-level Developer', 'Senior Developer', 'Tech Lead'],
-                    skillGaps: ['Advanced Programming', 'System Design', 'Leadership Skills'],
-                    analysis: 'Based on your profile, focus on building strong technical foundations and gaining relevant certifications.'
+                    suggestedSkills: [
+                        "Advanced JavaScript/TypeScript",
+                        "Cloud Computing (AWS/Azure)",
+                        "Database Design & Optimization",
+                        "System Architecture",
+                        "DevOps & CI/CD"
+                    ],
+                    suggestedCertifications: [
+                        "AWS Certified Developer",
+                        "Google Cloud Professional",
+                        "Microsoft Azure Fundamentals"
+                    ],
+                    careerPath: [
+                        "Junior Developer",
+                        "Mid-level Developer",
+                        "Senior Developer",
+                        "Tech Lead/Architect"
+                    ],
+                    skillGaps: [
+                        "Advanced system design",
+                        "Cloud platform expertise",
+                        "Leadership skills"
+                    ],
+                    analysis: "Based on your profile, focus on advancing your technical skills and gaining cloud computing experience to progress in your career."
                 };
             }
         } else {
-            // AI service unavailable - use fallback recommendations
+            // AI service unavailable - return fallback recommendations
             console.log('AI service unavailable, using fallback recommendations');
             recommendations = {
-                suggestedSkills: ['JavaScript', 'React', 'Node.js', 'Database Management', 'Cloud Computing'],
-                suggestedCertifications: ['AWS Certified Developer', 'Google Cloud Professional', 'Microsoft Azure Fundamentals'],
-                careerPath: ['Junior Developer', 'Mid-level Developer', 'Senior Developer', 'Tech Lead'],
-                skillGaps: ['Advanced Programming', 'System Design', 'Leadership Skills'],
-                analysis: 'AI service is currently unavailable. Based on your profile, focus on building strong technical foundations and gaining relevant certifications.'
+                suggestedSkills: [
+                    "Advanced JavaScript/TypeScript",
+                    "Cloud Computing (AWS/Azure)",
+                    "Database Design & Optimization",
+                    "System Architecture",
+                    "DevOps & CI/CD"
+                ],
+                suggestedCertifications: [
+                    "AWS Certified Developer",
+                    "Google Cloud Professional",
+                    "Microsoft Azure Fundamentals"
+                ],
+                careerPath: [
+                    "Junior Developer",
+                    "Mid-level Developer",
+                    "Senior Developer",
+                    "Tech Lead/Architect"
+                ],
+                skillGaps: [
+                    "Advanced system design",
+                    "Cloud platform expertise",
+                    "Leadership skills"
+                ],
+                analysis: "Based on your profile, focus on advancing your technical skills and gaining cloud computing experience to progress in your career."
             };
         }
 
-        // Update profile with AI recommendations
-        profile.aiRecommendations = {
-            ...recommendations,
-            lastUpdated: new Date()
-        };
-
-        await profile.save();
-
         res.json({
             message: 'Profile analysis completed successfully',
-            recommendations
+            recommendations: recommendations,
+            aiServiceAvailable: !!aiResponse
         });
+
     } catch (error) {
         console.error('Profile analysis error:', error);
         res.status(500).json({
@@ -147,79 +203,88 @@ const analyzeProfile = async (req, res) => {
     }
 };
 
-// @desc    Generate AI-powered test questions
+// @desc    Generate personalized test questions
 // @access  Private
-const generateTest = async (req, res) => {
+const generateTestQuestions = async (req, res) => {
     try {
-        const { topic, difficulty, numberOfQuestions = 5 } = req.body;
+        const { topic, difficulty, count = 5 } = req.body;
 
         if (!topic) {
             return res.status(400).json({ message: 'Topic is required' });
         }
 
         const prompt = `
-    Generate ${numberOfQuestions} multiple-choice questions about ${topic} at ${difficulty || 'intermediate'} level.
-    
-    Each question should have:
-    - A clear, well-formulated question
-    - 4 answer options (A, B, C, D)
-    - One correct answer
-    - A brief explanation of why the correct answer is right
-    
-    Format your response as a JSON array with the following structure:
-    [
-      {
-        "question": "Question text here?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": 0,
-        "explanation": "Explanation of the correct answer"
-      }
-    ]
-    
-    Make sure the questions are practical and relevant to real-world applications.
-    `;
+        Generate ${count} ${difficulty || 'intermediate'} level questions about ${topic}.
+        
+        Each question should have:
+        - A clear, specific question
+        - 4 multiple choice options (A, B, C, D)
+        - One correct answer
+        - A brief explanation
+        
+        Format as JSON:
+        {
+          "questions": [
+            {
+              "question": "Question text here?",
+              "options": {
+                "A": "Option A",
+                "B": "Option B", 
+                "C": "Option C",
+                "D": "Option D"
+              },
+              "correctAnswer": "A",
+              "explanation": "Brief explanation of why this is correct"
+            }
+          ]
+        }
+        `;
 
         const aiResponse = await callOllama(prompt);
 
-        // Try to parse the AI response as JSON
-        let questions;
         if (aiResponse) {
             try {
-                const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+                const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
-                    questions = JSON.parse(jsonMatch[0]);
+                    const questions = JSON.parse(jsonMatch[0]);
+                    res.json({
+                        message: 'Test questions generated successfully',
+                        questions: questions.questions || [],
+                        aiServiceAvailable: true
+                    });
                 } else {
-                    throw new Error('No JSON array found in response');
+                    throw new Error('No JSON found in response');
                 }
             } catch (parseError) {
-                console.error('Failed to parse AI test response:', parseError);
-                // Fallback questions if AI response parsing fails
-                questions = [
-                    {
-                        question: `What is a key concept in ${topic}?`,
-                        options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                        correctAnswer: 0,
-                        explanation: 'This is the correct answer because...'
-                    }
-                ];
+                console.error('Failed to parse test questions:', parseError);
+                res.status(500).json({
+                    message: 'Failed to generate test questions',
+                    error: 'AI response parsing failed'
+                });
             }
         } else {
-            // AI service unavailable - use fallback questions
-            console.log('AI service unavailable, using fallback questions');
-            questions = [
+            // Fallback questions
+            const fallbackQuestions = [
                 {
-                    question: `What is a key concept in ${topic}?`,
-                    options: ['Option A', 'Option B', 'Option C', 'Option D'],
-                    correctAnswer: 0,
-                    explanation: 'This is the correct answer because...'
+                    question: `What is the primary purpose of ${topic}?`,
+                    options: {
+                        A: "Option A",
+                        B: "Option B",
+                        C: "Option C",
+                        D: "Option D"
+                    },
+                    correctAnswer: "A",
+                    explanation: "This is a fallback question generated when AI service is unavailable."
                 }
             ];
+
+            res.json({
+                message: 'Test questions generated (fallback mode)',
+                questions: fallbackQuestions,
+                aiServiceAvailable: false
+            });
         }
 
-        res.json({
-            message: 'Test questions generated successfully',
-            questions
-        });
     } catch (error) {
         console.error('Test generation error:', error);
         res.status(500).json({
@@ -229,307 +294,7 @@ const generateTest = async (req, res) => {
     }
 };
 
-// @desc    Get personalized career advice
-// @access  Private
-const getCareerAdvice = async (req, res) => {
-    try {
-        const { question } = req.body;
-        const profile = await Profile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found. Please complete your profile first.' });
-        }
-
-        const prompt = `
-    You are a career advisor. A user with the following profile is asking for advice:
-
-    Profile Summary:
-    - Desired Role: ${profile.careerInfo.desiredRole}
-    - Experience Level: ${profile.careerInfo.experienceLevel}
-    - Industry: ${profile.careerInfo.industry || 'Not specified'}
-    - Technical Skills: ${profile.skills.technical.map(s => s.name).join(', ') || 'None'}
-    - Goals: ${profile.goals.longTerm.join(', ') || 'None specified'}
-
-    User's Question: ${question}
-
-    Please provide thoughtful, personalized career advice based on their profile and question. 
-    Keep your response practical and actionable, focusing on specific steps they can take.
-    `;
-
-        const advice = await callOllama(prompt);
-
-        if (!advice) {
-            // AI service unavailable - provide fallback advice
-            console.log('AI service unavailable, using fallback career advice');
-            const fallbackAdvice = `Based on your profile as a ${profile.careerInfo.desiredRole} with ${profile.careerInfo.experienceLevel} experience, I recommend focusing on building strong technical foundations, gaining hands-on experience with projects, and networking within your industry. Consider taking relevant courses and certifications to advance your career.`;
-
-            res.json({
-                message: 'Career advice generated successfully (AI service unavailable)',
-                advice: fallbackAdvice
-            });
-        } else {
-            res.json({
-                message: 'Career advice generated successfully',
-                advice
-            });
-        }
-    } catch (error) {
-        console.error('Career advice error:', error);
-        res.status(500).json({
-            message: 'Error generating career advice',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Get AI-recommended certificates based on user profile
-// @access  Private
-const getRecommendedCertificates = async (req, res) => {
-    try {
-        const profile = await Profile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found. Please complete your profile first.' });
-        }
-
-        // Get all certificates
-        const allCertificates = await Certificate.find({});
-
-        if (allCertificates.length === 0) {
-            return res.json({
-                message: 'No certificates available',
-                certificates: [],
-                recommendations: []
-            });
-        }
-
-        // Create AI prompt for certificate recommendations
-        const userSkills = profile.skills.technical.map(s => s.name).join(', ');
-        const userInterests = profile.interests.join(', ');
-        const desiredRole = profile.careerInfo.desiredRole;
-        const experienceLevel = profile.careerInfo.experienceLevel;
-
-        const certificateList = allCertificates.map(cert =>
-            `- ${cert.name} (${cert.category}, ${cert.difficulty}): ${cert.description}`
-        ).join('\n');
-
-        const prompt = `
-        Based on the user's profile, recommend the most relevant certificates from the following list:
-
-        User Profile:
-        - Desired Role: ${desiredRole}
-        - Experience Level: ${experienceLevel}
-        - Technical Skills: ${userSkills}
-        - Interests: ${userInterests}
-
-        Available Certificates:
-        ${certificateList}
-
-        Please return ONLY a JSON array of certificate names that are most relevant to this user's profile and career goals. 
-        Return maximum 8 recommendations, prioritized by relevance.
-
-        Format: ["Certificate Name 1", "Certificate Name 2", "Certificate Name 3"]
-        `;
-
-        const aiResponse = await callOllama(prompt);
-
-        let recommendedCertNames = [];
-        if (aiResponse) {
-            try {
-                const jsonMatch = aiResponse.match(/\[[\s\S]*?\]/);
-                if (jsonMatch) {
-                    recommendedCertNames = JSON.parse(jsonMatch[0]);
-                }
-            } catch (parseError) {
-                console.error('Failed to parse certificate recommendations:', parseError);
-                // Fallback: return first 6 certificates
-                recommendedCertNames = allCertificates.slice(0, 6).map(cert => cert.name);
-            }
-        } else {
-            // AI service unavailable - use fallback recommendations
-            console.log('AI service unavailable, using fallback certificate recommendations');
-            recommendedCertNames = allCertificates.slice(0, 6).map(cert => cert.name);
-        }
-
-        // Filter certificates based on AI recommendations
-        const recommendedCertificates = allCertificates.filter(cert =>
-            recommendedCertNames.includes(cert.name)
-        );
-
-        // If AI didn't return enough recommendations, add some based on user skills
-        if (recommendedCertificates.length < 4) {
-            const skillBasedCerts = allCertificates.filter(cert =>
-                userSkills.toLowerCase().includes(cert.category.toLowerCase()) ||
-                cert.category.toLowerCase().includes(userSkills.toLowerCase())
-            ).slice(0, 4 - recommendedCertificates.length);
-
-            recommendedCertificates.push(...skillBasedCerts);
-        }
-
-        res.json({
-            message: 'AI recommendations generated successfully',
-            certificates: recommendedCertificates,
-            totalAvailable: allCertificates.length,
-            recommendedCount: recommendedCertificates.length
-        });
-
-    } catch (error) {
-        console.error('Certificate recommendation error:', error);
-        res.status(500).json({
-            message: 'Error generating certificate recommendations',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Get AI-recommended tests based on user profile
-// @access  Private
-const getRecommendedTests = async (req, res) => {
-    try {
-        const profile = await Profile.findOne({ user: req.user.id });
-
-        if (!profile) {
-            return res.status(404).json({ message: 'Profile not found. Please complete your profile first.' });
-        }
-
-        // Get all tests
-        const allTests = await Test.find({});
-
-        if (allTests.length === 0) {
-            return res.json({
-                message: 'No tests available',
-                tests: [],
-                recommendations: []
-            });
-        }
-
-        // Create AI prompt for test recommendations
-        const userSkills = profile.skills.technical.map(s => s.name).join(', ');
-        const userInterests = profile.interests.join(', ');
-        const desiredRole = profile.careerInfo.desiredRole;
-        const experienceLevel = profile.careerInfo.experienceLevel;
-
-        const testList = allTests.map(test =>
-            `- ${test.title} (${test.category}, ${test.difficulty}): ${test.description}`
-        ).join('\n');
-
-        const prompt = `
-        Based on the user's profile, recommend the most relevant tests from the following list:
-
-        User Profile:
-        - Desired Role: ${desiredRole}
-        - Experience Level: ${experienceLevel}
-        - Technical Skills: ${userSkills}
-        - Interests: ${userInterests}
-
-        Available Tests:
-        ${testList}
-
-        IMPORTANT: You must return ONLY a JSON array with the EXACT test titles from the list above. Do not modify or paraphrase the titles.
-        Return maximum 6 recommendations, prioritized by relevance and skill gaps.
-
-        Format: ["JavaScript Fundamentals Assessment", "React Components and Hooks", "Data Science Fundamentals"]
-        `;
-
-        const aiResponse = await callOllama(prompt);
-        console.log('AI Response for test recommendations:', aiResponse);
-
-        let recommendedTestTitles = [];
-        if (aiResponse) {
-            try {
-                const jsonMatch = aiResponse.match(/\[[\s\S]*?\]/);
-                if (jsonMatch) {
-                    recommendedTestTitles = JSON.parse(jsonMatch[0]);
-                    console.log('Parsed AI recommendations:', recommendedTestTitles);
-                } else {
-                    console.log('No JSON array found in AI response');
-                }
-            } catch (parseError) {
-                console.error('Failed to parse test recommendations:', parseError);
-                // Fallback: return first 4 tests
-                recommendedTestTitles = allTests.slice(0, 4).map(test => test.title);
-            }
-        } else {
-            // AI service unavailable - use fallback recommendations
-            console.log('AI service unavailable, using fallback test recommendations');
-            recommendedTestTitles = allTests.slice(0, 4).map(test => test.title);
-        }
-
-        // Filter tests based on AI recommendations
-        const recommendedTests = allTests.filter(test =>
-            recommendedTestTitles.includes(test.title)
-        );
-        console.log('Filtered recommended tests:', recommendedTests.map(t => t.title));
-
-        // If AI didn't return enough recommendations, add some based on user skills
-        if (recommendedTests.length < 3) {
-            console.log('Not enough AI recommendations, adding skill-based tests');
-            const skillBasedTests = allTests.filter(test =>
-                userSkills.toLowerCase().includes(test.category.toLowerCase()) ||
-                test.category.toLowerCase().includes(userSkills.toLowerCase())
-            ).slice(0, 3 - recommendedTests.length);
-            console.log('Skill-based tests:', skillBasedTests.map(t => t.title));
-
-            recommendedTests.push(...skillBasedTests);
-        }
-
-        res.json({
-            message: 'AI test recommendations generated successfully',
-            tests: recommendedTests,
-            totalAvailable: allTests.length,
-            recommendedCount: recommendedTests.length
-        });
-
-    } catch (error) {
-        console.error('Test recommendation error:', error);
-        res.status(500).json({
-            message: 'Error generating test recommendations',
-            error: error.message
-        });
-    }
-};
-
-// @desc    Check AI service health
-// @access  Public
-const checkHealth = async (req, res) => {
-    try {
-        console.log(`Testing Ollama connection at: ${OLLAMA_BASE_URL}`);
-
-        // Test Ollama connection
-        const response = await axios.get(`${OLLAMA_BASE_URL}/api/tags`, {
-            timeout: 5000
-        });
-
-        console.log('Ollama health check successful');
-        res.json({
-            status: 'healthy',
-            ollama: {
-                connected: true,
-                baseUrl: OLLAMA_BASE_URL,
-                model: OLLAMA_MODEL,
-                models: response.data.models || []
-            }
-        });
-    } catch (error) {
-        console.error('Ollama health check failed:', error.message);
-        res.status(503).json({
-            status: 'unhealthy',
-            ollama: {
-                connected: false,
-                baseUrl: OLLAMA_BASE_URL,
-                model: OLLAMA_MODEL,
-                error: error.message,
-                code: error.code
-            }
-        });
-    }
-};
-
 module.exports = {
     analyzeProfile,
-    generateTest,
-    getCareerAdvice,
-    getRecommendedCertificates,
-    getRecommendedTests,
-    checkHealth
+    generateTestQuestions
 };

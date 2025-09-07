@@ -15,7 +15,4 @@ const jobRolesSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-jobRolesSchema.index({ user: 1 });
-
 module.exports = mongoose.model('JobRoles', jobRolesSchema);
