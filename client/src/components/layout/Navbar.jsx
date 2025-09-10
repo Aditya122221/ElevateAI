@@ -10,9 +10,7 @@ import {
     Sun,
     Moon,
     Home,
-    BookOpen,
-    Award,
-    BarChart3
+    Award
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -50,8 +48,6 @@ const Navbar = () => {
     const navLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: Home },
         { path: '/certificates', label: 'Certificates', icon: Award },
-        { path: '/tests', label: 'Tests', icon: BookOpen },
-        { path: '/test-results', label: 'Results', icon: BarChart3 },
     ];
 
     return (

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -15,15 +15,12 @@ import SignupPage from './pages/auth/SignupPage';
 import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import ProfileCreationPage from './pages/profile/ProfileCreationPage';
 import DashboardPage from './pages/DashboardPage';
 import CertificateLibraryPage from './pages/CertificateLibraryPage';
-import TestPage from './pages/TestPage';
-import TestResultsPage from './pages/TestResultsPage';
-import ProfilePage from './pages/profile/ProfilePage';
+import ProfileCreationPage from './pages/ProfileCreation/ProfileCreationPage';
 
 // Protected Route Component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, requireProfileCompletion = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -34,33 +31,14 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  // If user is logged in but profile is not complete, redirect to profile creation
-  if (user && !user.isProfileComplete) {
+  // Check if profile completion is required and user hasn't completed it
+  if (requireProfileCompletion && !user.isProfileComplete) {
     return <Navigate to="/profile-creation" />;
   }
 
   return children;
 };
 
-// Profile Creation Route (only for users with incomplete profiles)
-const ProfileCreationRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  // If user is logged in and profile is complete, redirect to dashboard
-  if (user && user.isProfileComplete) {
-    return <Navigate to="/dashboard" />;
-  }
-
-  return children;
-};
 
 // Public Route Component (redirect if authenticated)
 const PublicRoute = ({ children }) => {
@@ -71,15 +49,92 @@ const PublicRoute = ({ children }) => {
   }
 
   if (user) {
-    // If user is logged in but profile is not complete, redirect to profile creation
+    // If user is logged in but hasn't completed profile, redirect to profile creation
     if (!user.isProfileComplete) {
       return <Navigate to="/profile-creation" />;
     }
-    // If user is logged in and profile is complete, redirect to dashboard
+    // If user is logged in and has completed profile, redirect to dashboard
     return <Navigate to="/dashboard" />;
   }
 
   return children;
+};
+
+// Layout wrapper component to conditionally render navbar and footer
+const LayoutWrapper = ({ children }) => {
+  const location = useLocation();
+
+  // Routes that should not have navbar and footer
+  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+  const isAuthRoute = authRoutes.some(route => location.pathname.startsWith(route));
+
+  if (isAuthRoute) {
+    return (
+      <div className="app">
+        <main className="main-content">
+          {children}
+        </main>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 5000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="app">
+      <Navbar />
+      <main className="main-content">
+        {children}
+      </main>
+      <Footer />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+    </div>
+  );
 };
 
 function App() {
@@ -87,136 +142,83 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
-          <div className="app">
-            <Navbar />
-            <main className="main-content">
-              <Routes>
-                {/* Public Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <PublicRoute>
-                      <LandingPage />
-                    </PublicRoute>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={
-                    <PublicRoute>
-                      <LoginPage />
-                    </PublicRoute>
-                  }
-                />
-                <Route
-                  path="/signup"
-                  element={
-                    <PublicRoute>
-                      <SignupPage />
-                    </PublicRoute>
-                  }
-                />
-                <Route
-                  path="/verify-email"
-                  element={<EmailVerificationPage />}
-                />
-                <Route
-                  path="/forgot-password"
-                  element={
-                    <PublicRoute>
-                      <ForgotPasswordPage />
-                    </PublicRoute>
-                  }
-                />
-                <Route
-                  path="/reset-password/:token"
-                  element={
-                    <PublicRoute>
-                      <ResetPasswordPage />
-                    </PublicRoute>
-                  }
-                />
+          <LayoutWrapper>
+            <Routes>
+              {/* Public Routes */}
+              <Route
+                path="/"
+                element={
+                  <PublicRoute>
+                    <LandingPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <LoginPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <PublicRoute>
+                    <SignupPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/verify-email"
+                element={<EmailVerificationPage />}
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <PublicRoute>
+                    <ForgotPasswordPage />
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/reset-password/:token"
+                element={
+                  <PublicRoute>
+                    <ResetPasswordPage />
+                  </PublicRoute>
+                }
+              />
 
-                {/* Profile Creation Route */}
-                <Route
-                  path="/profile-creation"
-                  element={
-                    <ProfileCreationRoute>
-                      <ProfileCreationPage />
-                    </ProfileCreationRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/certificates"
-                  element={
-                    <ProtectedRoute>
-                      <CertificateLibraryPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/tests"
-                  element={
-                    <ProtectedRoute>
-                      <TestPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/test-results"
-                  element={
-                    <ProtectedRoute>
-                      <TestResultsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  }
-                />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute requireProfileCompletion={true}>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/certificates"
+                element={
+                  <ProtectedRoute requireProfileCompletion={true}>
+                    <CertificateLibraryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile-creation"
+                element={
+                  <ProtectedRoute>
+                    <ProfileCreationPage />
+                  </ProtectedRoute>
+                }
+              />
 
-                {/* Catch all route */}
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </main>
-            <Footer />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#4ade80',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
-                  duration: 5000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
-                  },
-                },
-              }}
-            />
-          </div>
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </LayoutWrapper>
         </Router>
       </AuthProvider>
     </ThemeProvider>

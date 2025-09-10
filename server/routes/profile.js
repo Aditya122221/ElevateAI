@@ -15,6 +15,8 @@ const {
     getExperience,
     saveJobRoles,
     getJobRoles,
+    saveGoals,
+    getGoals,
     completeProfile,
     uploadProfilePictureController,
     uploadProjectImageController,
@@ -129,6 +131,18 @@ router.post('/basic-details', auth, [
 // @access  Private
 router.get('/basic-details', auth, getBasicDetails);
 
+// @route   PUT /api/profile/basic-details
+// @desc    Update basic details section
+// @access  Private
+router.put('/basic-details', auth, [
+    body('firstName').trim().isLength({ min: 1 }).withMessage('First name is required'),
+    body('lastName').trim().isLength({ min: 1 }).withMessage('Last name is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('phone').trim().isLength({ min: 1 }).withMessage('Phone number is required'),
+    body('linkedin').trim().isLength({ min: 1 }).withMessage('LinkedIn profile is required'),
+    body('github').trim().isLength({ min: 1 }).withMessage('GitHub profile is required')
+], saveBasicDetails);
+
 // @route   POST /api/profile/skills
 // @desc    Save skills section
 // @access  Private
@@ -150,6 +164,17 @@ router.post('/skills', auth, [
 // @desc    Get skills section
 // @access  Private
 router.get('/skills', auth, getSkills);
+
+// @route   PUT /api/profile/skills
+// @desc    Update skills section
+// @access  Private
+router.put('/skills', auth, [
+    body('languages').optional().isArray().withMessage('Languages must be an array'),
+    body('technologies').optional().isArray().withMessage('Technologies must be an array'),
+    body('frameworks').optional().isArray().withMessage('Frameworks must be an array'),
+    body('tools').optional().isArray().withMessage('Tools must be an array'),
+    body('softSkills').optional().isArray().withMessage('Soft skills must be an array')
+], saveSkills);
 
 // @route   POST /api/profile/projects
 // @desc    Save projects section
@@ -185,6 +210,35 @@ router.post('/projects', auth, [
 // @access  Private
 router.get('/projects', auth, getProjects);
 
+// @route   PUT /api/profile/projects
+// @desc    Update projects section
+// @access  Private
+router.put('/projects', auth, [
+    body('projects').custom((projects) => {
+        if (!Array.isArray(projects)) {
+            throw new Error('Projects must be an array');
+        }
+
+        // If projects exist, validate each project
+        projects.forEach((project, index) => {
+            if (!project.name || !project.name.trim()) {
+                throw new Error(`Project ${index + 1}: Name is required`);
+            }
+            if (!project.startDate) {
+                throw new Error(`Project ${index + 1}: Start date is required`);
+            }
+            if (!project.details || !Array.isArray(project.details) || project.details.length === 0) {
+                throw new Error(`Project ${index + 1}: At least one detail point is required`);
+            }
+            if (!project.details.some(detail => detail && detail.trim())) {
+                throw new Error(`Project ${index + 1}: At least one detail point must have content`);
+            }
+        });
+
+        return true;
+    })
+], saveProjects);
+
 // @route   POST /api/profile/certifications
 // @desc    Save certifications section
 // @access  Private
@@ -200,6 +254,32 @@ router.post('/certifications', auth, [
 // @access  Private
 router.get('/certifications', auth, getCertifications);
 
+// @route   PUT /api/profile/certifications
+// @desc    Update certifications section
+// @access  Private
+router.put('/certifications', auth, [
+    body('certifications').custom((certifications) => {
+        if (!Array.isArray(certifications)) {
+            throw new Error('Certifications must be an array');
+        }
+
+        // If certifications exist, validate each certification
+        certifications.forEach((cert, index) => {
+            if (!cert.name || !cert.name.trim()) {
+                throw new Error(`Certification ${index + 1}: Name is required`);
+            }
+            if (!cert.platform || !cert.platform.trim()) {
+                throw new Error(`Certification ${index + 1}: Platform is required`);
+            }
+            if (!cert.startDate) {
+                throw new Error(`Certification ${index + 1}: Start date is required`);
+            }
+        });
+
+        return true;
+    })
+], saveCertifications);
+
 // @route   POST /api/profile/experience
 // @desc    Save experience section
 // @access  Private
@@ -209,6 +289,11 @@ router.post('/experience', auth, saveExperience);
 // @desc    Get experience section
 // @access  Private
 router.get('/experience', auth, getExperience);
+
+// @route   PUT /api/profile/experience
+// @desc    Update experience section
+// @access  Private
+router.put('/experience', auth, saveExperience);
 
 // @route   POST /api/profile/job-roles
 // @desc    Save job roles section
@@ -221,6 +306,35 @@ router.post('/job-roles', auth, [
 // @desc    Get job roles section
 // @access  Private
 router.get('/job-roles', auth, getJobRoles);
+
+// @route   PUT /api/profile/job-roles
+// @desc    Update job roles section
+// @access  Private
+router.put('/job-roles', auth, [
+    body('desiredJobRoles').isArray({ min: 1 }).withMessage('At least one job role is required'),
+    body('desiredJobRoles.*').notEmpty().withMessage('Job role cannot be empty')
+], saveJobRoles);
+
+// @route   POST /api/profile/goals
+// @desc    Save goals section
+// @access  Private
+router.post('/goals', auth, [
+    body('shortTerm').optional().isArray().withMessage('Short-term goals must be an array'),
+    body('longTerm').optional().isArray().withMessage('Long-term goals must be an array')
+], saveGoals);
+
+// @route   GET /api/profile/goals
+// @desc    Get goals section
+// @access  Private
+router.get('/goals', auth, getGoals);
+
+// @route   PUT /api/profile/goals
+// @desc    Update goals section
+// @access  Private
+router.put('/goals', auth, [
+    body('shortTerm').optional().isArray().withMessage('Short-term goals must be an array'),
+    body('longTerm').optional().isArray().withMessage('Long-term goals must be an array')
+], saveGoals);
 
 // @route   POST /api/profile/complete
 // @desc    Complete profile by combining all sections

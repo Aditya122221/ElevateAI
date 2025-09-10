@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './EmailVerificationPage.module.css';
 
 const EmailVerificationPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
     const [status, setStatus] = useState('pending'); // pending, success, error
@@ -45,6 +47,9 @@ const EmailVerificationPage = () => {
                 // Store token and user data
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
+
+                // Update AuthContext with user data
+                updateUser(data.user);
 
                 // Redirect to profile creation after 2 seconds
                 setTimeout(() => {

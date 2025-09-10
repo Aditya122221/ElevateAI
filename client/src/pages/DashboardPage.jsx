@@ -4,15 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     TrendingUp,
     Award,
-    BookOpen,
-    BarChart3,
     Target,
     Brain,
     ArrowRight,
     Star,
     Clock,
-    CheckCircle,
-    AlertCircle,
     Lightbulb,
     Map,
     Zap,
@@ -41,14 +37,12 @@ const DashboardPage = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [profile, setProfile] = useState(null);
     const [recommendations, setRecommendations] = useState(null);
-    const [recentTests, setRecentTests] = useState([]);
     const [careerPaths, setCareerPaths] = useState([]);
     const [skillGaps, setSkillGaps] = useState([]);
     const [simulationResults, setSimulationResults] = useState(null);
     const [showSimulation, setShowSimulation] = useState(false);
     const [selectedCareer, setSelectedCareer] = useState('');
     const [stats, setStats] = useState({
-        testsCompleted: 0,
         certificatesEarned: 0,
         skillsLearned: 0,
         goalsAchieved: 0,
@@ -64,31 +58,23 @@ const DashboardPage = () => {
 
     const fetchDashboardData = async () => {
         try {
-            const [profileRes, recommendationsRes, testsRes] = await Promise.all([
+            const [profileRes, recommendationsRes] = await Promise.all([
                 axios.get('/api/profile'),
-                axios.get('/api/profile/recommendations'),
-                axios.get('/api/tests/user/results')
+                axios.get('/api/profile/recommendations')
             ]);
 
             setProfile(profileRes.data.profile);
             setRecommendations(recommendationsRes.data.recommendations);
-            setRecentTests(testsRes.data.results.slice(0, 3));
 
             // Calculate enhanced stats
-            const testResults = testsRes.data.results;
-            const avgScore = testResults.length > 0
-                ? Math.round(testResults.reduce((sum, test) => sum + test.percentage, 0) / testResults.length)
-                : 0;
-
             setStats({
-                testsCompleted: testResults.length,
                 certificatesEarned: profileRes.data.profile?.certifications?.length || 0,
                 skillsLearned: profileRes.data.profile?.skills?.technical?.length || 0,
                 goalsAchieved: 0,
-                avgScore,
+                avgScore: 0,
                 learningStreak: Math.floor(Math.random() * 30) + 1, // Mock data
                 careerLevel: 'Intermediate',
-                marketValue: 75000 + (avgScore * 500) // Mock calculation
+                marketValue: 75000 // Mock calculation
             });
 
             // Mock data for career paths and skill gaps
@@ -142,25 +128,11 @@ const DashboardPage = () => {
 
     const quickActions = [
         {
-            title: 'Take a Test',
-            description: 'Assess your skills and knowledge',
-            icon: BookOpen,
-            link: '/tests',
-            color: 'from-blue-500 to-blue-600'
-        },
-        {
             title: 'Browse Certificates',
             description: 'Find certifications to boost your career',
             icon: Award,
             link: '/certificates',
             color: 'from-green-500 to-green-600'
-        },
-        {
-            title: 'View Results',
-            description: 'Check your test scores and progress',
-            icon: BarChart3,
-            link: '/test-results',
-            color: 'from-purple-500 to-purple-600'
         },
         {
             title: 'Update Profile',
@@ -209,7 +181,7 @@ const DashboardPage = () => {
     };
 
     const tabs = [
-        { id: 'overview', label: 'Overview', icon: BarChart3 },
+        { id: 'overview', label: 'Overview', icon: TrendingUp },
         { id: 'career-path', label: 'Career Path', icon: Map },
         { id: 'skills', label: 'Skills Gap', icon: TrendingUp },
         { id: 'simulation', label: 'What-If', icon: Zap }
@@ -254,15 +226,6 @@ const DashboardPage = () => {
                         </div>
 
                         <div className={styles.welcomeStats}>
-                            <div className={styles.statCard}>
-                                <div className={styles.statIcon}>
-                                    <BookOpen className="w-6 h-6" />
-                                </div>
-                                <div className={styles.statContent}>
-                                    <div className={styles.statNumber}>{stats.testsCompleted}</div>
-                                    <div className={styles.statLabel}>Tests Completed</div>
-                                </div>
-                            </div>
                             <div className={styles.statCard}>
                                 <div className={styles.statIcon}>
                                     <Award className="w-6 h-6" />
@@ -412,61 +375,6 @@ const DashboardPage = () => {
                                         </div>
                                     )}
 
-                                    {/* Recent Test Results */}
-                                    <div className="card p-6">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Recent Test Results
-                                        </h3>
-
-                                        {recentTests.length > 0 ? (
-                                            <div className="space-y-4">
-                                                {recentTests.map((test, index) => (
-                                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                                        <div>
-                                                            <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                                                {test.test?.title || 'Test'}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                                {new Date(test.completedAt).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                        <div className="flex items-center">
-                                                            {test.passed ? (
-                                                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                                            ) : (
-                                                                <AlertCircle className="w-5 h-5 text-red-500" />
-                                                            )}
-                                                            <span className="ml-2 text-sm font-medium">
-                                                                {test.percentage}%
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-4">
-                                                <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                    No tests taken yet
-                                                </p>
-                                                <Link
-                                                    to="/tests"
-                                                    className="btn btn-primary btn-sm mt-2"
-                                                >
-                                                    Take Your First Test
-                                                </Link>
-                                            </div>
-                                        )}
-
-                                        {recentTests.length > 0 && (
-                                            <Link
-                                                to="/test-results"
-                                                className="btn btn-outline btn-sm w-full mt-4"
-                                            >
-                                                View All Results
-                                            </Link>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -614,10 +522,6 @@ const DashboardPage = () => {
                                             <button className={styles.learnBtn}>
                                                 <BookOpen className="w-4 h-4" />
                                                 Learn Now
-                                            </button>
-                                            <button className={styles.testBtn}>
-                                                <BarChart3 className="w-4 h-4" />
-                                                Test
                                             </button>
                                         </div>
                                     </motion.div>

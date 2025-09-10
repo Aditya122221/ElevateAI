@@ -5,6 +5,7 @@ const Projects = require('../models/Projects');
 const Certifications = require('../models/Certifications');
 const Experience = require('../models/Experience');
 const JobRoles = require('../models/JobRoles');
+const Goals = require('../models/Goals');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { uploadProfilePicture, uploadProjectImage } = require('../services/cloudinaryService');
@@ -309,6 +310,58 @@ const getJobRoles = async (req, res) => {
     }
 };
 
+// ==================== GOALS ====================
+
+// @desc    Save goals
+// @access  Private
+const saveGoals = async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const goalsData = req.body;
+        goalsData.user = req.user.id;
+
+        let goals = await Goals.findOne({ user: req.user.id });
+
+        if (goals) {
+            goals = await Goals.findOneAndUpdate(
+                { user: req.user.id },
+                { $set: goalsData },
+                { new: true, runValidators: true }
+            );
+        } else {
+            goals = new Goals(goalsData);
+            await goals.save();
+        }
+
+        res.json({
+            message: 'Goals saved successfully',
+            data: goals
+        });
+    } catch (error) {
+        console.error('Goals save error:', error);
+        res.status(500).json({ message: 'Server error while saving goals' });
+    }
+};
+
+// @desc    Get goals
+// @access  Private
+const getGoals = async (req, res) => {
+    try {
+        const goals = await Goals.findOne({ user: req.user.id });
+        res.json({
+            message: 'Goals fetched successfully',
+            data: goals
+        });
+    } catch (error) {
+        console.error('Goals fetch error:', error);
+        res.status(500).json({ message: 'Server error while fetching goals' });
+    }
+};
+
 // ==================== PROFILE COMPLETION ====================
 
 // @desc    Complete profile by combining all sections
@@ -448,6 +501,10 @@ module.exports = {
     // Job Roles
     saveJobRoles,
     getJobRoles,
+
+    // Goals
+    saveGoals,
+    getGoals,
 
     // Profile Completion
     completeProfile,

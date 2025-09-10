@@ -143,3 +143,7 @@ To test the complete flow:
 3. Sign up for a new account
 4. Complete the profile creation process
 5. Verify data is saved correctly in the database
+
+
+Create a profile page with section user details, skills, projects, certificates, experience, goals. userdetails have filed name, email, phone, linkedin, github, portfolio. all details are updatable except email and phone number. skill include programming languages, technologies, frmeworks, tools and platforms, softskills. all are editable and can add new skills too. projects section has details project name, techstack used, start date, end date, details in points, github link and live url link. editable as well as new addition. certification section has details certificate name, platforms, tech stack used, start date, end date all editable as well as new certificate add option. experience section details include company name, role, tech stack used, details in points, startdate, enddate all editable as well as new data addition. goals section include the role on which the user want to get the job. editable as well as new addition
+use jsx and module.css to build not tsx and tailwind
