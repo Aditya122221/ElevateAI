@@ -368,10 +368,11 @@ const ProfileCreationPage = () => {
         }
     };
 
-    const canProceed = () => {
+    // Check if a specific section is completed
+    const isSectionCompleted = (stepNumber) => {
         try {
-            switch (currentStep) {
-                case 1:
+            switch (stepNumber) {
+                case 1: // Basic Details
                     const basicDetails = getValues('basicDetails') || {};
                     return Boolean(
                         basicDetails.firstName?.trim() &&
@@ -381,13 +382,44 @@ const ProfileCreationPage = () => {
                         basicDetails.linkedin?.trim() &&
                         basicDetails.github?.trim()
                     );
-                case 2:
+                case 2: // Skills
                     const skills = getValues('skills') || {};
                     return Boolean(
                         Object.values(skills).some(skillArray =>
                             Array.isArray(skillArray) && skillArray.length > 0
                         )
                     );
+                case 3: // Projects - optional, always considered completed
+                    return true;
+                case 4: // Certifications - optional, always considered completed
+                    return true;
+                case 5: // Experience - optional, always considered completed
+                    return true;
+                case 6: // Job Roles
+                    const jobRoles = getValues('desiredJobRoles') || [];
+                    return Boolean(Array.isArray(jobRoles) && jobRoles.length > 0);
+                default:
+                    return true;
+            }
+        } catch (error) {
+            return false;
+        }
+    };
+
+    // Check if all required sections are completed
+    const areAllRequiredSectionsCompleted = () => {
+        const requiredSteps = steps.filter(step => step.required);
+        return requiredSteps.every(step => isSectionCompleted(step.number));
+    };
+
+    const canProceed = () => {
+        try {
+            // For the current step, check if it's valid
+            switch (currentStep) {
+                case 1:
+                    return isSectionCompleted(1);
+                case 2:
+                    return isSectionCompleted(2);
                 case 3:
                     // Projects validation - if projects exist, they must have required fields
                     const projects = getValues('projects') || [];
@@ -401,11 +433,34 @@ const ProfileCreationPage = () => {
 
                         return hasName && hasStartDate && hasDetails;
                     });
+                case 4:
+                    // Certifications validation - if certifications exist, they must have required fields
+                    const certifications = getValues('certifications') || [];
+                    if (certifications.length === 0) return true; // No certifications is allowed
+
+                    return certifications.every(cert => {
+                        const hasName = cert.name?.trim();
+                        const hasIssuer = cert.issuer?.trim();
+                        const hasDate = cert.date?.trim();
+
+                        return hasName && hasIssuer && hasDate;
+                    });
+                case 5:
+                    // Experience validation - if experience exists, they must have required fields
+                    const experience = getValues('experience') || [];
+                    if (experience.length === 0) return true; // No experience is allowed
+
+                    return experience.every(exp => {
+                        const hasTitle = exp.title?.trim();
+                        const hasCompany = exp.company?.trim();
+                        const hasStartDate = exp.startDate?.trim();
+
+                        return hasTitle && hasCompany && hasStartDate;
+                    });
                 case 6:
-                    const jobRoles = getValues('desiredJobRoles') || [];
-                    return Boolean(Array.isArray(jobRoles) && jobRoles.length > 0);
+                    return isSectionCompleted(6);
                 default:
-                    return true; // Optional steps
+                    return true;
             }
         } catch (error) {
             return false;
@@ -548,6 +603,28 @@ const ProfileCreationPage = () => {
                         </div>
                     )}
 
+                    {/* Required Sections Status */}
+                    {!areAllRequiredSectionsCompleted() && (
+                        <div className={styles.requiredSectionsStatus}>
+                            <h4>Required Sections Status:</h4>
+                            <div className={styles.sectionStatusList}>
+                                {steps.filter(step => step.required).map(step => (
+                                    <div key={step.number} className={styles.sectionStatusItem}>
+                                        <span className={`${styles.sectionStatusIcon} ${isSectionCompleted(step.number) ? styles.completed : styles.incomplete}`}>
+                                            {isSectionCompleted(step.number) ? <CheckCircle size={16} /> : '○'}
+                                        </span>
+                                        <span className={styles.sectionStatusText}>
+                                            {step.title} {isSectionCompleted(step.number) ? '✓' : '✗'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className={styles.completionNote}>
+                                Complete all required sections to finish your profile.
+                            </p>
+                        </div>
+                    )}
+
 
                     {/* Form */}
                     <div className={styles.profileCard}>
@@ -592,8 +669,8 @@ const ProfileCreationPage = () => {
                                     ) : (
                                         <button
                                             type="submit"
-                                            disabled={isLoading || !canProceed()}
-                                            className={`${styles.navButton} ${styles.submitButton} ${isLoading ? styles.loading : ''}`}
+                                            disabled={isLoading || !canProceed() || !areAllRequiredSectionsCompleted()}
+                                            className={`${styles.navButton} ${styles.submitButton} ${isLoading ? styles.loading : ''} ${!areAllRequiredSectionsCompleted() ? styles.disabled : ''}`}
                                         >
                                             {isLoading ? (
                                                 <LoadingSpinner size="sm" />
