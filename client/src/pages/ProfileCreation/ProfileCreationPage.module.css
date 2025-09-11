@@ -36,6 +36,11 @@
 
 /* Progress Steps */
 .progressContainer {
+    position: sticky;
+    top: 80px;
+    /* Account for navbar height */
+    z-index: 50;
+    /* Lower than navbar */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,6 +49,10 @@
     gap: 0.5rem;
     overflow-x: auto;
     padding: 1rem 0;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .progressStep {
@@ -718,6 +727,8 @@
     }
 
     .progressContainer {
+        top: 70px;
+        /* Slightly lower for mobile navbar */
         gap: 0.5rem;
         flex-wrap: wrap;
         justify-content: center;
@@ -762,6 +773,8 @@
     }
 
     .progressContainer {
+        top: 65px;
+        /* Lower for smaller screens */
         gap: 0.25rem;
         overflow-x: auto;
         justify-content: flex-start;
@@ -842,6 +855,8 @@
     }
 
     .progressContainer {
+        top: 60px;
+        /* Lowest for mobile phones */
         gap: 0.125rem;
         overflow-x: auto;
         justify-content: flex-start;

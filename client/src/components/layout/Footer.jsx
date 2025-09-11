@@ -149,7 +149,7 @@ const Footer = () => {
             </div>
             <div className={styles.contactDetails}>
               <p className={styles.contactLabel}>Phone</p>
-              <p className={styles.contactValue}>+1 (555) 123-4567</p>
+              <p className={styles.contactValue}>+91 XXXXXXXXXX</p>
             </div>
           </div>
           <div className={styles.contactItem}>
@@ -158,7 +158,7 @@ const Footer = () => {
             </div>
             <div className={styles.contactDetails}>
               <p className={styles.contactLabel}>Location</p>
-              <p className={styles.contactValue}>San Francisco, CA</p>
+              <p className={styles.contactValue}>Jalandhar, Punjab, India</p>
             </div>
           </div>
         </div>

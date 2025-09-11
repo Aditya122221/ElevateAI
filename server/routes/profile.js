@@ -15,8 +15,6 @@ const {
     getExperience,
     saveJobRoles,
     getJobRoles,
-    saveGoals,
-    getGoals,
     completeProfile,
     uploadProfilePictureController,
     uploadProjectImageController,
@@ -315,26 +313,6 @@ router.put('/job-roles', auth, [
     body('desiredJobRoles.*').notEmpty().withMessage('Job role cannot be empty')
 ], saveJobRoles);
 
-// @route   POST /api/profile/goals
-// @desc    Save goals section
-// @access  Private
-router.post('/goals', auth, [
-    body('shortTerm').optional().isArray().withMessage('Short-term goals must be an array'),
-    body('longTerm').optional().isArray().withMessage('Long-term goals must be an array')
-], saveGoals);
-
-// @route   GET /api/profile/goals
-// @desc    Get goals section
-// @access  Private
-router.get('/goals', auth, getGoals);
-
-// @route   PUT /api/profile/goals
-// @desc    Update goals section
-// @access  Private
-router.put('/goals', auth, [
-    body('shortTerm').optional().isArray().withMessage('Short-term goals must be an array'),
-    body('longTerm').optional().isArray().withMessage('Long-term goals must be an array')
-], saveGoals);
 
 // @route   POST /api/profile/complete
 // @desc    Complete profile by combining all sections

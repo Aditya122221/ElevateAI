@@ -135,9 +135,24 @@ const ProfileCreationPage = () => {
                         tools: [],
                         softSkills: []
                     },
-                    projects: projectsRes.status === 'fulfilled' && projectsRes.value.data.data ? projectsRes.value.data.data.projects || [] : [],
-                    certifications: certificationsRes.status === 'fulfilled' && certificationsRes.value.data.data ? certificationsRes.value.data.data.certifications || [] : [],
-                    experience: experienceRes.status === 'fulfilled' && experienceRes.value.data.data ? experienceRes.value.data.data.experiences || [] : [],
+                    projects: projectsRes.status === 'fulfilled' && projectsRes.value.data.data ?
+                        (projectsRes.value.data.data.projects || []).map(project => ({
+                            ...project,
+                            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+                            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''
+                        })) : [],
+                    certifications: certificationsRes.status === 'fulfilled' && certificationsRes.value.data.data ?
+                        (certificationsRes.value.data.data.certifications || []).map(cert => ({
+                            ...cert,
+                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().split('T')[0] : '',
+                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().split('T')[0] : ''
+                        })) : [],
+                    experience: experienceRes.status === 'fulfilled' && experienceRes.value.data.data ?
+                        (experienceRes.value.data.data.experiences || []).map(exp => ({
+                            ...exp,
+                            startDate: exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : '',
+                            endDate: exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : ''
+                        })) : [],
                     desiredJobRoles: jobRolesRes.status === 'fulfilled' && jobRolesRes.value.data.data ? jobRolesRes.value.data.data.desiredJobRoles || [] : []
                 };
 
@@ -293,13 +308,34 @@ const ProfileCreationPage = () => {
                         setValue('skills', sectionData);
                         break;
                     case 3: // Projects
-                        setValue('projects', sectionData.projects || []);
+                        const projects = sectionData.projects || [];
+                        // Format dates for projects
+                        const formattedProjects = projects.map(project => ({
+                            ...project,
+                            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+                            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''
+                        }));
+                        setValue('projects', formattedProjects);
                         break;
                     case 4: // Certifications
-                        setValue('certifications', sectionData.certifications || []);
+                        const certifications = sectionData.certifications || [];
+                        // Format dates for certifications
+                        const formattedCertifications = certifications.map(cert => ({
+                            ...cert,
+                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().split('T')[0] : '',
+                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().split('T')[0] : ''
+                        }));
+                        setValue('certifications', formattedCertifications);
                         break;
                     case 5: // Experience
-                        setValue('experience', sectionData.experiences || []);
+                        const experiences = sectionData.experiences || [];
+                        // Format dates for experience
+                        const formattedExperiences = experiences.map(exp => ({
+                            ...exp,
+                            startDate: exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : '',
+                            endDate: exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : ''
+                        }));
+                        setValue('experience', formattedExperiences);
                         break;
                     case 6: // Job Roles
                         setValue('desiredJobRoles', sectionData.desiredJobRoles || []);
@@ -440,10 +476,10 @@ const ProfileCreationPage = () => {
 
                     return certifications.every(cert => {
                         const hasName = cert.name?.trim();
-                        const hasIssuer = cert.issuer?.trim();
-                        const hasDate = cert.date?.trim();
+                        const hasPlatform = cert.platform?.trim();
+                        const hasStartDate = cert.startDate?.trim();
 
-                        return hasName && hasIssuer && hasDate;
+                        return hasName && hasPlatform && hasStartDate;
                     });
                 case 5:
                     // Experience validation - if experience exists, they must have required fields
@@ -451,11 +487,11 @@ const ProfileCreationPage = () => {
                     if (experience.length === 0) return true; // No experience is allowed
 
                     return experience.every(exp => {
-                        const hasTitle = exp.title?.trim();
-                        const hasCompany = exp.company?.trim();
+                        const hasPosition = exp.position?.trim();
+                        const hasCompanyName = exp.companyName?.trim();
                         const hasStartDate = exp.startDate?.trim();
 
-                        return hasTitle && hasCompany && hasStartDate;
+                        return hasPosition && hasCompanyName && hasStartDate;
                     });
                 case 6:
                     return isSectionCompleted(6);
@@ -584,24 +620,6 @@ const ProfileCreationPage = () => {
                         })}
                     </div>
 
-                    {/* Progress Summary */}
-                    {profileProgress && (
-                        <div className={styles.progressSummary}>
-                            <div className={styles.progressBar}>
-                                <div
-                                    className={styles.progressFill}
-                                    style={{ width: `${profileProgress.completionPercentage}%` }}
-                                />
-                            </div>
-                            <p className={styles.progressText}>
-                                Profile {profileProgress.completionPercentage}% Complete
-                                {profileProgress.lastCompletedStep > 0 && (
-                                    <span> • Last completed: Step {profileProgress.lastCompletedStep}</span>
-                                )}
-                                {isSaving && <span> • Saving...</span>}
-                            </p>
-                        </div>
-                    )}
 
                     {/* Required Sections Status */}
                     {!areAllRequiredSectionsCompleted() && (
