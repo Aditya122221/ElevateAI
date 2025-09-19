@@ -1,5 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, Linkedin, Github, Globe, Edit, Plus, Save, X, Calendar, MapPin, ExternalLink, Award, Briefcase } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { getAllProfileData, saveBasicDetails, updateBasicDetails, saveSkills, updateSkills, saveProjects, updateProjects, saveCertifications, updateCertifications, saveExperience, updateExperience, saveJobRoles, updateJobRoles } from '../../services/profileService';
+import toast from 'react-hot-toast';
+
+// Utility function to format dates from YYYY-MM to MM-YYYY
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const [year, month] = dateString.split('-');
+  return `${month}-${year}`;
+};
+
+// Utility function to convert MM-YYYY to YYYY-MM for form inputs
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const [month, year] = dateString.split('-');
+  return `${year}-${month}`;
+};
 
 // ProfilePage.module.css (simulated as JavaScript object)
 const styles = {
@@ -79,28 +96,74 @@ const styles = {
 };
 
 // Profile.jsx Component
-const Profile = () => {
+const Profile = ({ profileData, setProfileData }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    linkedin: 'https://linkedin.com/in/johndoe',
-    github: 'https://github.com/johndoe',
-    portfolio: 'https://johndoe.dev',
-    profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-    bio: 'Passionate Full-stack developer with 5+ years of experience building scalable web applications. I love creating elegant solutions to complex problems and am always eager to learn new technologies.'
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const { user } = useAuth();
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Here you would typically save to backend/database
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Save basic details
+      if (profileData.basicDetails) {
+        await updateBasicDetails(profileData.basicDetails);
+      }
+
+      // Save skills
+      if (profileData.skills) {
+        await updateSkills(profileData.skills);
+      }
+
+      // Save projects
+      if (profileData.projects) {
+        await updateProjects(profileData.projects);
+      }
+
+      // Save certifications
+      if (profileData.certifications) {
+        await updateCertifications(profileData.certifications);
+      }
+
+      // Save experience
+      if (profileData.experience) {
+        await updateExperience(profileData.experience);
+      }
+
+      // Save job roles
+      if (profileData.jobRoles) {
+        await updateJobRoles(profileData.jobRoles);
+      }
+
+      toast.success('Profile updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form data if needed
+    // Reload data to reset any unsaved changes
+    window.location.reload();
+  };
+
+
+  const basicDetails = profileData.basicDetails || {};
+
+  // Ensure all basic details have safe defaults
+  const safeBasicDetails = {
+    firstName: basicDetails.firstName || '',
+    lastName: basicDetails.lastName || '',
+    email: basicDetails.email || user?.email || '',
+    phone: basicDetails.phone || '',
+    linkedin: basicDetails.linkedin || '',
+    github: basicDetails.github || '',
+    portfolio: basicDetails.portfolio || '',
+    profilePicture: basicDetails.profilePicture || '',
+    bio: basicDetails.bio || ''
   };
 
   return (
@@ -116,6 +179,7 @@ const Profile = () => {
               <button
                 onClick={handleCancel}
                 className={`${styles.button} ${styles.secondaryButton}`}
+                disabled={isSaving}
               >
                 <X className="w-4 h-4" />
                 Cancel
@@ -123,9 +187,10 @@ const Profile = () => {
               <button
                 onClick={handleSave}
                 className={`${styles.button} ${styles.successButton}`}
+                disabled={isSaving}
               >
                 <Save className="w-4 h-4" />
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </>
           ) : (
@@ -147,8 +212,14 @@ const Profile = () => {
               <label className={styles.label}>First Name *</label>
               <input
                 type="text"
-                value={profile.firstName}
-                onChange={(e) => setProfile({...profile, firstName: e.target.value})}
+                value={safeBasicDetails.firstName}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    firstName: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 required
               />
@@ -157,21 +228,33 @@ const Profile = () => {
               <label className={styles.label}>Last Name *</label>
               <input
                 type="text"
-                value={profile.lastName}
-                onChange={(e) => setProfile({...profile, lastName: e.target.value})}
+                value={safeBasicDetails.lastName}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    lastName: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 required
               />
             </div>
           </div>
-          
+
           <div className={styles.formRow}>
             <div className={styles.formGroup}>
               <label className={styles.label}>Email Address *</label>
               <input
                 type="email"
-                value={profile.email}
-                onChange={(e) => setProfile({...profile, email: e.target.value})}
+                value={safeBasicDetails.email}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    email: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 required
               />
@@ -180,8 +263,14 @@ const Profile = () => {
               <label className={styles.label}>Phone Number</label>
               <input
                 type="tel"
-                value={profile.phone}
-                onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                value={safeBasicDetails.phone}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    phone: e.target.value
+                  }
+                }))}
                 className={styles.input}
               />
             </div>
@@ -192,8 +281,14 @@ const Profile = () => {
               <label className={styles.label}>LinkedIn Profile</label>
               <input
                 type="url"
-                value={profile.linkedin}
-                onChange={(e) => setProfile({...profile, linkedin: e.target.value})}
+                value={safeBasicDetails.linkedin}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    linkedin: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 placeholder="https://linkedin.com/in/yourprofile"
               />
@@ -202,8 +297,14 @@ const Profile = () => {
               <label className={styles.label}>GitHub Profile</label>
               <input
                 type="url"
-                value={profile.github}
-                onChange={(e) => setProfile({...profile, github: e.target.value})}
+                value={safeBasicDetails.github}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    github: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 placeholder="https://github.com/yourusername"
               />
@@ -215,8 +316,14 @@ const Profile = () => {
               <label className={styles.label}>Portfolio Website</label>
               <input
                 type="url"
-                value={profile.portfolio}
-                onChange={(e) => setProfile({...profile, portfolio: e.target.value})}
+                value={safeBasicDetails.portfolio}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    portfolio: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 placeholder="https://yourportfolio.com"
               />
@@ -225,8 +332,14 @@ const Profile = () => {
               <label className={styles.label}>Profile Picture URL</label>
               <input
                 type="url"
-                value={profile.profilePicture}
-                onChange={(e) => setProfile({...profile, profilePicture: e.target.value})}
+                value={safeBasicDetails.profilePicture}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  basicDetails: {
+                    ...prev.basicDetails,
+                    profilePicture: e.target.value
+                  }
+                }))}
                 className={styles.input}
                 placeholder="https://example.com/your-photo.jpg"
               />
@@ -237,8 +350,14 @@ const Profile = () => {
             <label className={styles.label}>Professional Bio</label>
             <textarea
               rows="4"
-              value={profile.bio}
-              onChange={(e) => setProfile({...profile, bio: e.target.value})}
+              value={safeBasicDetails.bio}
+              onChange={(e) => setProfileData(prev => ({
+                ...prev,
+                basicDetails: {
+                  ...prev.basicDetails,
+                  bio: e.target.value
+                }
+              }))}
               className={styles.textarea}
               placeholder="Tell us about yourself, your experience, and what you're passionate about..."
             />
@@ -246,40 +365,56 @@ const Profile = () => {
         </form>
       ) : (
         <div>
-          <img 
-            src={profile.profilePicture} 
-            alt="Profile" 
+          <img
+            src={safeBasicDetails.profilePicture || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjcwIiByPSIzMCIgZmlsbD0iIzlDQTNBRiIvPgo8cGF0aCBkPSJNNTAgMTQwQzUwIDEyNS42NDMgNjEuNjQzIDEyMCA3NSAxMjBIMTI1QzEzOC4zNTcgMTIwIDE1MCAxMjUuNjQzIDE1MCAxNDBWMjAwSDUwVjE0MFoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+'}
+            alt="Profile"
             className={styles.profilePicture}
-            onError={(e) => {e.target.src = 'https://via.placeholder.com/200x200/4F46E5/FFFFFF?text=Profile'}}
+            onError={(e) => { e.target.src = 'https://via.placeholder.com/200x200/4F46E5/FFFFFF?text=Profile' }}
           />
           <div className={styles.profileInfo}>
-            <h3 className={styles.profileName}>{profile.firstName} {profile.lastName}</h3>
-            <p className={styles.profileBio}>{profile.bio}</p>
+            <h3 className={styles.profileName}>
+              {safeBasicDetails.firstName || 'First'} {safeBasicDetails.lastName || 'Last'}
+            </h3>
+            <p className={styles.profileBio}>
+              {safeBasicDetails.bio || 'No bio available. Click Edit to add your professional bio.'}
+            </p>
           </div>
-          
+
           <div className={styles.divider}></div>
-          
+
           <div className={styles.contactInfo}>
             <div className={styles.contactItem}>
               <Mail className="w-5 h-5 text-blue-600" />
-              <span>{profile.email}</span>
+              <span>{safeBasicDetails.email || 'No email provided'}</span>
             </div>
             <div className={styles.contactItem}>
               <Phone className="w-5 h-5 text-green-600" />
-              <span>{profile.phone}</span>
+              <span>{safeBasicDetails.phone || 'No phone provided'}</span>
             </div>
-            <div className={styles.contactItem}>
-              <Linkedin className="w-5 h-5 text-blue-700" />
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                LinkedIn Profile
-              </a>
-            </div>
-            <div className={styles.contactItem}>
-              <Github className="w-5 h-5 text-gray-800" />
-              <a href={profile.github} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
-                GitHub Profile
-              </a>
-            </div>
+            {safeBasicDetails.linkedin && (
+              <div className={styles.contactItem}>
+                <Linkedin className="w-5 h-5 text-blue-700" />
+                <a href={safeBasicDetails.linkedin} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                  LinkedIn Profile
+                </a>
+              </div>
+            )}
+            {safeBasicDetails.github && (
+              <div className={styles.contactItem}>
+                <Github className="w-5 h-5 text-gray-800" />
+                <a href={safeBasicDetails.github} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                  GitHub Profile
+                </a>
+              </div>
+            )}
+            {safeBasicDetails.portfolio && (
+              <div className={styles.contactItem}>
+                <Globe className="w-5 h-5 text-purple-600" />
+                <a href={safeBasicDetails.portfolio} target="_blank" rel="noopener noreferrer" className={styles.contactLink}>
+                  Portfolio Website
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -288,22 +423,39 @@ const Profile = () => {
 };
 
 // Skills.jsx Component
-const Skills = () => {
+const Skills = ({ profileData, setProfileData }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [skills, setSkills] = useState({
-    languages: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'Go'],
-    technologies: ['React', 'Node.js', 'MongoDB', 'PostgreSQL', 'Redis', 'GraphQL'],
-    frameworks: ['Next.js', 'Express.js', 'Django', 'Spring Boot', 'FastAPI', 'Vue.js'],
-    tools: ['Git', 'Docker', 'Kubernetes', 'AWS', 'Jenkins', 'Terraform'],
-    softSkills: ['Leadership', 'Communication', 'Problem Solving', 'Team Collaboration', 'Project Management', 'Mentoring']
-  });
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    setIsEditing(false);
+  const skills = profileData.skills || {};
+
+  // Ensure all skill categories are arrays
+  const safeSkills = {
+    languages: Array.isArray(skills.languages) ? skills.languages : [],
+    technologies: Array.isArray(skills.technologies) ? skills.technologies : [],
+    frameworks: Array.isArray(skills.frameworks) ? skills.frameworks : [],
+    tools: Array.isArray(skills.tools) ? skills.tools : [],
+    softSkills: Array.isArray(skills.softSkills) ? skills.softSkills : []
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateSkills(safeSkills);
+      toast.success('Skills updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving skills:', error);
+      toast.error('Failed to save skills');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    // Reset to original data
+    window.location.reload();
   };
 
   return (
@@ -319,6 +471,7 @@ const Skills = () => {
               <button
                 onClick={handleCancel}
                 className={`${styles.button} ${styles.secondaryButton}`}
+                disabled={isSaving}
               >
                 <X className="w-4 h-4" />
                 Cancel
@@ -326,9 +479,10 @@ const Skills = () => {
               <button
                 onClick={handleSave}
                 className={`${styles.button} ${styles.successButton}`}
+                disabled={isSaving}
               >
                 <Save className="w-4 h-4" />
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </>
           ) : (
@@ -345,7 +499,7 @@ const Skills = () => {
 
       {isEditing ? (
         <form className={styles.form}>
-          {Object.entries(skills).map(([category, skillList]) => (
+          {Object.entries(safeSkills).map(([category, skillList]) => (
             <div key={category} className={styles.formGroup}>
               <label className={styles.label}>
                 {category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}
@@ -353,10 +507,13 @@ const Skills = () => {
               <input
                 type="text"
                 value={skillList.join(', ')}
-                onChange={(e) => setSkills({
-                  ...skills, 
-                  [category]: e.target.value.split(',').map(s => s.trim()).filter(s => s)
-                })}
+                onChange={(e) => setProfileData(prev => ({
+                  ...prev,
+                  skills: {
+                    ...prev.skills,
+                    [category]: e.target.value.split(',').map(s => s.trim()).filter(s => s)
+                  }
+                }))}
                 className={styles.input}
                 placeholder="Enter skills separated by commas"
               />
@@ -365,15 +522,19 @@ const Skills = () => {
         </form>
       ) : (
         <div className={styles.skillsGrid}>
-          {Object.entries(skills).map(([category, skillList]) => (
+          {Object.entries(safeSkills).map(([category, skillList]) => (
             <div key={category} className={styles.skillCategory}>
               <h4 className={styles.skillCategoryTitle}>
                 {category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1')}
               </h4>
               <div className={styles.skillsList}>
-                {skillList.map((skill, index) => (
-                  <span key={index} className={styles.skillTag}>{skill}</span>
-                ))}
+                {skillList.length > 0 ? (
+                  skillList.map((skill, index) => (
+                    <span key={index} className={styles.skillTag}>{skill}</span>
+                  ))
+                ) : (
+                  <span className="text-gray-500 italic">No skills added yet</span>
+                )}
               </div>
             </div>
           ))}
@@ -384,30 +545,16 @@ const Skills = () => {
 };
 
 // Experience.jsx Component
-const Experience = () => {
+const Experience = ({ profileData, setProfileData }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [experiences, setExperiences] = useState([
-    {
-      id: 1,
-      company: 'Tech Solutions Inc.',
-      position: 'Senior Full Stack Developer',
-      startDate: '2022-01',
-      endDate: '2024-12',
-      skills: ['React', 'Node.js', 'MongoDB', 'AWS'],
-      description: 'Led development of customer-facing web applications serving 100k+ users. Implemented microservices architecture and reduced page load times by 40%. Mentored junior developers and established coding standards.'
-    },
-    {
-      id: 2,
-      company: 'StartupXYZ',
-      position: 'Frontend Developer',
-      startDate: '2020-06',
-      endDate: '2021-12',
-      skills: ['React', 'TypeScript', 'GraphQL', 'Jest'],
-      description: 'Built responsive web applications from scratch. Collaborated with UX/UI designers to implement pixel-perfect designs. Increased user engagement by 25% through performance optimizations.'
-    }
-  ]);
+
+  const experiences = profileData.experience?.experiences || [];
+
+  // Ensure experiences is always an array
+  const safeExperiences = Array.isArray(experiences) ? experiences : [];
 
   const [formData, setFormData] = useState({
     company: '',
@@ -429,43 +576,105 @@ const Experience = () => {
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const newExperience = {
       id: Date.now(),
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    setExperiences([newExperience, ...experiences]);
+
+    const updatedExperiences = [newExperience, ...safeExperiences];
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        experiences: updatedExperiences
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateExperience({ experiences: updatedExperiences });
+      toast.success('Experience added successfully!');
+    } catch (error) {
+      console.error('Error saving experience:', error);
+      toast.error('Failed to save experience');
+    }
+
     resetForm();
     setShowAddModal(false);
   };
 
   const handleEdit = (index) => {
-    const exp = experiences[index];
+    const exp = safeExperiences[index];
     setFormData({
       ...exp,
-      skills: exp.skills.join(', ')
+      startDate: formatDateForInput(exp.startDate),
+      endDate: formatDateForInput(exp.endDate),
+      skills: (exp.skills || []).join(', ')
     });
     setEditingIndex(index);
     setShowAddModal(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const updatedExperience = {
-      ...experiences[editingIndex],
+      ...safeExperiences[editingIndex],
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    const newExperiences = [...experiences];
+    const newExperiences = [...safeExperiences];
     newExperiences[editingIndex] = updatedExperience;
-    setExperiences(newExperiences);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        experiences: newExperiences
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateExperience({ experiences: newExperiences });
+      toast.success('Experience updated successfully!');
+    } catch (error) {
+      console.error('Error updating experience:', error);
+      toast.error('Failed to update experience');
+    }
+
     resetForm();
     setShowAddModal(false);
     setEditingIndex(null);
   };
 
-  const handleDelete = (index) => {
-    setExperiences(experiences.filter((_, i) => i !== index));
+  const handleDelete = async (index) => {
+    const newExperiences = safeExperiences.filter((_, i) => i !== index);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        experiences: newExperiences
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateExperience({ experiences: newExperiences });
+      toast.success('Experience deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting experience:', error);
+      toast.error('Failed to delete experience');
+    }
   };
 
   return (
@@ -486,7 +695,7 @@ const Experience = () => {
         </div>
       </div>
 
-      {experiences.length === 0 ? (
+      {safeExperiences.length === 0 ? (
         <div className={styles.emptyState}>
           <Briefcase className={styles.emptyStateIcon} />
           <p className={styles.emptyStateText}>No work experience added yet</p>
@@ -494,8 +703,8 @@ const Experience = () => {
         </div>
       ) : (
         <div className={styles.experienceList}>
-          {experiences.map((exp, index) => (
-            <div key={exp.id} className={styles.experienceItem}>
+          {safeExperiences.map((exp, index) => (
+            <div key={exp.id || index} className={styles.experienceItem}>
               <div className={styles.experienceHeader}>
                 <div>
                   <h4 className={styles.experienceTitle}>{exp.position}</h4>
@@ -503,7 +712,7 @@ const Experience = () => {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <span className={styles.experienceDuration}>
-                    {exp.startDate} - {exp.endDate}
+                    {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : 'Present'}
                   </span>
                   <div className="flex gap-2">
                     <button
@@ -525,7 +734,7 @@ const Experience = () => {
               </div>
               <p className={styles.experienceDescription}>{exp.description}</p>
               <div className={styles.skillsList}>
-                {exp.skills.map((skill, skillIndex) => (
+                {(exp.skills || []).map((skill, skillIndex) => (
                   <span key={skillIndex} className={styles.skillTag}>{skill}</span>
                 ))}
               </div>
@@ -541,7 +750,7 @@ const Experience = () => {
               <h3 className={styles.modalTitle}>
                 {editingIndex !== null ? 'Edit Experience' : 'Add New Experience'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingIndex(null);
@@ -559,7 +768,7 @@ const Experience = () => {
                   <input
                     type="text"
                     value={formData.company}
-                    onChange={(e) => setFormData({...formData, company: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     className={styles.input}
                     required
                   />
@@ -569,7 +778,7 @@ const Experience = () => {
                   <input
                     type="text"
                     value={formData.position}
-                    onChange={(e) => setFormData({...formData, position: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                     className={styles.input}
                     required
                   />
@@ -581,7 +790,7 @@ const Experience = () => {
                   <input
                     type="month"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     className={styles.input}
                     required
                   />
@@ -591,7 +800,7 @@ const Experience = () => {
                   <input
                     type="month"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                     className={styles.input}
                     placeholder="Leave empty if current position"
                   />
@@ -602,7 +811,7 @@ const Experience = () => {
                 <input
                   type="text"
                   value={formData.skills}
-                  onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                   className={styles.input}
                   placeholder="Enter skills separated by commas"
                 />
@@ -612,7 +821,7 @@ const Experience = () => {
                 <textarea
                   rows="4"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className={styles.textarea}
                   placeholder="Describe your role, responsibilities, and achievements..."
                 />
@@ -633,33 +842,15 @@ const Experience = () => {
 };
 
 // Projects.jsx Component
-const Projects = () => {
+const Projects = ({ profileData, setProfileData }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'E-commerce Platform',
-      description: 'Full-stack e-commerce solution with payment integration, inventory management, and admin dashboard. Built with modern technologies for scalability and performance.',
-      githubLink: 'https://github.com/johndoe/ecommerce-platform',
-      liveUrl: 'https://mystore-demo.com',
-      startDate: '2023-06',
-      endDate: '2023-12',
-      skills: ['React', 'Node.js', 'Stripe', 'MongoDB'],
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Task Management App',
-      description: 'Collaborative task management application with real-time updates, team collaboration features, and advanced filtering options.',
-      githubLink: 'https://github.com/johndoe/task-manager',
-      liveUrl: 'https://taskmaster-app.com',
-      startDate: '2023-01',
-      endDate: '2023-05',
-      skills: ['Vue.js', 'Firebase', 'TypeScript', 'Vuetify'],
-      image: 'https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=400&h=250&fit=crop'
-    }
-  ]);
+
+  const projects = profileData.projects?.projects || [];
+
+  // Ensure projects is always an array
+  const safeProjects = Array.isArray(projects) ? projects : [];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -685,43 +876,105 @@ const Projects = () => {
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const newProject = {
       id: Date.now(),
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    setProjects([newProject, ...projects]);
+
+    const updatedProjects = [newProject, ...safeProjects];
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      projects: {
+        ...prev.projects,
+        projects: updatedProjects
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateProjects({ projects: updatedProjects });
+      toast.success('Project added successfully!');
+    } catch (error) {
+      console.error('Error saving project:', error);
+      toast.error('Failed to save project');
+    }
+
     resetForm();
     setShowAddModal(false);
   };
 
   const handleEdit = (index) => {
-    const project = projects[index];
+    const project = safeProjects[index];
     setFormData({
       ...project,
-      skills: project.skills.join(', ')
+      startDate: formatDateForInput(project.startDate),
+      endDate: formatDateForInput(project.endDate),
+      skills: (project.skills || []).join(', ')
     });
     setEditingIndex(index);
     setShowAddModal(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const updatedProject = {
-      ...projects[editingIndex],
+      ...safeProjects[editingIndex],
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    const newProjects = [...projects];
+    const newProjects = [...safeProjects];
     newProjects[editingIndex] = updatedProject;
-    setProjects(newProjects);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      projects: {
+        ...prev.projects,
+        projects: newProjects
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateProjects({ projects: newProjects });
+      toast.success('Project updated successfully!');
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast.error('Failed to update project');
+    }
+
     resetForm();
     setShowAddModal(false);
     setEditingIndex(null);
   };
 
-  const handleDelete = (index) => {
-    setProjects(projects.filter((_, i) => i !== index));
+  const handleDelete = async (index) => {
+    const newProjects = safeProjects.filter((_, i) => i !== index);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      projects: {
+        ...prev.projects,
+        projects: newProjects
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateProjects({ projects: newProjects });
+      toast.success('Project deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
+    }
   };
 
   return (
@@ -742,7 +995,7 @@ const Projects = () => {
         </div>
       </div>
 
-      {projects.length === 0 ? (
+      {safeProjects.length === 0 ? (
         <div className={styles.emptyState}>
           <Globe className={styles.emptyStateIcon} />
           <p className={styles.emptyStateText}>No projects added yet</p>
@@ -750,17 +1003,17 @@ const Projects = () => {
         </div>
       ) : (
         <div className={styles.projectGrid}>
-          {projects.map((project, index) => (
-            <div key={project.id} className={styles.projectCard}>
-              <img 
-                src={project.image} 
-                alt={project.name} 
+          {safeProjects.map((project, index) => (
+            <div key={project.id || index} className={styles.projectCard}>
+              <img
+                src={project.image}
+                alt={project.name}
                 className={styles.projectImage}
-                onError={(e) => {e.target.src = 'https://via.placeholder.com/400x250/4F46E5/FFFFFF?text=Project+Image'}}
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/400x250/4F46E5/FFFFFF?text=Project+Image' }}
               />
               <h4 className={styles.projectTitle}>{project.name}</h4>
               <p className={styles.projectDescription}>{project.description}</p>
-              
+
               <div className={styles.projectLinks}>
                 {project.githubLink && (
                   <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className={styles.projectLink}>
@@ -775,13 +1028,13 @@ const Projects = () => {
                   </a>
                 )}
               </div>
-              
+
               <div className={styles.projectDuration}>
-                {project.startDate} - {project.endDate}
+                {formatDate(project.startDate)} - {project.endDate ? formatDate(project.endDate) : 'Present'}
               </div>
-              
+
               <div className={styles.skillsList}>
-                {project.skills.map((skill, skillIndex) => (
+                {(project.skills || []).map((skill, skillIndex) => (
                   <span key={skillIndex} className={styles.skillTag}>{skill}</span>
                 ))}
               </div>
@@ -814,7 +1067,7 @@ const Projects = () => {
               <h3 className={styles.modalTitle}>
                 {editingIndex !== null ? 'Edit Project' : 'Add New Project'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingIndex(null);
@@ -831,7 +1084,7 @@ const Projects = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className={styles.input}
                   required
                 />
@@ -841,7 +1094,7 @@ const Projects = () => {
                 <textarea
                   rows="3"
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className={styles.textarea}
                   placeholder="Describe your project, its features, and what problems it solves..."
                 />
@@ -852,7 +1105,7 @@ const Projects = () => {
                   <input
                     type="url"
                     value={formData.githubLink}
-                    onChange={(e) => setFormData({...formData, githubLink: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, githubLink: e.target.value })}
                     className={styles.input}
                     placeholder="https://github.com/username/repo"
                   />
@@ -862,7 +1115,7 @@ const Projects = () => {
                   <input
                     type="url"
                     value={formData.liveUrl}
-                    onChange={(e) => setFormData({...formData, liveUrl: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, liveUrl: e.target.value })}
                     className={styles.input}
                     placeholder="https://your-project.com"
                   />
@@ -874,7 +1127,7 @@ const Projects = () => {
                   <input
                     type="month"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     className={styles.input}
                   />
                 </div>
@@ -883,7 +1136,7 @@ const Projects = () => {
                   <input
                     type="month"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                     className={styles.input}
                   />
                 </div>
@@ -893,7 +1146,7 @@ const Projects = () => {
                 <input
                   type="text"
                   value={formData.skills}
-                  onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                   className={styles.input}
                   placeholder="Enter technologies separated by commas"
                 />
@@ -903,7 +1156,7 @@ const Projects = () => {
                 <input
                   type="url"
                   value={formData.image}
-                  onChange={(e) => setFormData({...formData, image: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                   className={styles.input}
                   placeholder="https://example.com/project-screenshot.jpg"
                 />
@@ -924,35 +1177,15 @@ const Projects = () => {
 };
 
 // Certificates.jsx Component
-const Certificates = () => {
+const Certificates = ({ profileData, setProfileData }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [certificates, setCertificates] = useState([
-    {
-      id: 1,
-      name: 'AWS Solutions Architect Professional',
-      platform: 'Amazon Web Services',
-      skills: ['AWS', 'Cloud Architecture', 'DevOps'],
-      startDate: '2023-03',
-      endDate: '2026-03'
-    },
-    {
-      id: 2,
-      name: 'Google Cloud Professional Developer',
-      platform: 'Google Cloud',
-      skills: ['GCP', 'Kubernetes', 'Cloud Functions'],
-      startDate: '2023-01',
-      endDate: '2025-01'
-    },
-    {
-      id: 3,
-      name: 'Meta React Developer Professional Certificate',
-      platform: 'Meta (via Coursera)',
-      skills: ['React', 'JavaScript', 'Frontend Development'],
-      startDate: '2022-08',
-      endDate: 'Lifetime'
-    }
-  ]);
+
+  const certificates = profileData.certifications?.certifications || [];
+
+  // Ensure certificates is always an array
+  const safeCertificates = Array.isArray(certificates) ? certificates : [];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -972,43 +1205,105 @@ const Certificates = () => {
     });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const newCertificate = {
       id: Date.now(),
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    setCertificates([newCertificate, ...certificates]);
+
+    const updatedCertificates = [newCertificate, ...safeCertificates];
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      certifications: {
+        ...prev.certifications,
+        certifications: updatedCertificates
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateCertifications({ certifications: updatedCertificates });
+      toast.success('Certificate added successfully!');
+    } catch (error) {
+      console.error('Error saving certificate:', error);
+      toast.error('Failed to save certificate');
+    }
+
     resetForm();
     setShowAddModal(false);
   };
 
   const handleEdit = (index) => {
-    const certificate = certificates[index];
+    const certificate = safeCertificates[index];
     setFormData({
       ...certificate,
-      skills: certificate.skills.join(', ')
+      startDate: formatDateForInput(certificate.startDate),
+      endDate: formatDateForInput(certificate.endDate),
+      skills: (certificate.skills || []).join(', ')
     });
     setEditingIndex(index);
     setShowAddModal(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const updatedCertificate = {
-      ...certificates[editingIndex],
+      ...safeCertificates[editingIndex],
       ...formData,
+      startDate: formatDate(formData.startDate),
+      endDate: formData.endDate ? formatDate(formData.endDate) : '',
       skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
     };
-    const newCertificates = [...certificates];
+    const newCertificates = [...safeCertificates];
     newCertificates[editingIndex] = updatedCertificate;
-    setCertificates(newCertificates);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      certifications: {
+        ...prev.certifications,
+        certifications: newCertificates
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateCertifications({ certifications: newCertificates });
+      toast.success('Certificate updated successfully!');
+    } catch (error) {
+      console.error('Error updating certificate:', error);
+      toast.error('Failed to update certificate');
+    }
+
     resetForm();
     setShowAddModal(false);
     setEditingIndex(null);
   };
 
-  const handleDelete = (index) => {
-    setCertificates(certificates.filter((_, i) => i !== index));
+  const handleDelete = async (index) => {
+    const newCertificates = safeCertificates.filter((_, i) => i !== index);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      certifications: {
+        ...prev.certifications,
+        certifications: newCertificates
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateCertifications({ certifications: newCertificates });
+      toast.success('Certificate deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting certificate:', error);
+      toast.error('Failed to delete certificate');
+    }
   };
 
   return (
@@ -1029,7 +1324,7 @@ const Certificates = () => {
         </div>
       </div>
 
-      {certificates.length === 0 ? (
+      {safeCertificates.length === 0 ? (
         <div className={styles.emptyState}>
           <Award className={styles.emptyStateIcon} />
           <p className={styles.emptyStateText}>No certificates added yet</p>
@@ -1037,16 +1332,16 @@ const Certificates = () => {
         </div>
       ) : (
         <div className={styles.certificateGrid}>
-          {certificates.map((cert, index) => (
-            <div key={cert.id} className={styles.certificateCard}>
+          {safeCertificates.map((cert, index) => (
+            <div key={cert.id || index} className={styles.certificateCard}>
               <h4 className={styles.certificateTitle}>{cert.name}</h4>
               <p className={styles.certificatePlatform}>{cert.platform}</p>
               <div className={styles.certificateDuration}>
-                Issued: {cert.startDate} | Expires: {cert.endDate}
+                Issued: {formatDate(cert.startDate)} | Expires: {cert.endDate ? formatDate(cert.endDate) : 'Lifetime'}
               </div>
-              
+
               <div className={styles.skillsList}>
-                {cert.skills.map((skill, skillIndex) => (
+                {(cert.skills || []).map((skill, skillIndex) => (
                   <span key={skillIndex} className={styles.skillTag}>{skill}</span>
                 ))}
               </div>
@@ -1079,7 +1374,7 @@ const Certificates = () => {
               <h3 className={styles.modalTitle}>
                 {editingIndex !== null ? 'Edit Certificate' : 'Add New Certificate'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingIndex(null);
@@ -1096,7 +1391,7 @@ const Certificates = () => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className={styles.input}
                   placeholder="e.g., AWS Solutions Architect Professional"
                   required
@@ -1107,7 +1402,7 @@ const Certificates = () => {
                 <input
                   type="text"
                   value={formData.platform}
-                  onChange={(e) => setFormData({...formData, platform: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
                   className={styles.input}
                   placeholder="e.g., Amazon Web Services, Google, Microsoft"
                   required
@@ -1119,7 +1414,7 @@ const Certificates = () => {
                   <input
                     type="month"
                     value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                     className={styles.input}
                   />
                 </div>
@@ -1128,7 +1423,7 @@ const Certificates = () => {
                   <input
                     type="month"
                     value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                     className={styles.input}
                     placeholder="Enter 'Lifetime' if never expires"
                   />
@@ -1139,7 +1434,7 @@ const Certificates = () => {
                 <input
                   type="text"
                   value={formData.skills}
-                  onChange={(e) => setFormData({...formData, skills: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                   className={styles.input}
                   placeholder="Enter skills separated by commas"
                 />
@@ -1160,16 +1455,15 @@ const Certificates = () => {
 };
 
 // JobRoles.jsx Component
-const JobRoles = () => {
+const JobRoles = ({ profileData, setProfileData }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [jobRoles, setJobRoles] = useState([
-    'Senior Full Stack Developer',
-    'Frontend Team Lead',
-    'Software Architect',
-    'Technical Product Manager',
-    'DevOps Engineer'
-  ]);
+
+  const jobRoles = profileData.jobRoles?.desiredJobRoles || [];
+
+  // Ensure jobRoles is always an array
+  const safeJobRoles = Array.isArray(jobRoles) ? jobRoles : [];
 
   const [formData, setFormData] = useState({
     role: ''
@@ -1179,33 +1473,88 @@ const JobRoles = () => {
     setFormData({ role: '' });
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (formData.role.trim()) {
-      setJobRoles([formData.role.trim(), ...jobRoles]);
+      const newJobRoles = [formData.role.trim(), ...safeJobRoles];
+
+      // Update local state
+      setProfileData(prev => ({
+        ...prev,
+        jobRoles: {
+          ...prev.jobRoles,
+          desiredJobRoles: newJobRoles
+        }
+      }));
+
+      // Save to backend
+      try {
+        await updateJobRoles({ desiredJobRoles: newJobRoles });
+        toast.success('Job role added successfully!');
+      } catch (error) {
+        console.error('Error saving job role:', error);
+        toast.error('Failed to save job role');
+      }
+
       resetForm();
       setShowAddModal(false);
     }
   };
 
   const handleEdit = (index) => {
-    setFormData({ role: jobRoles[index] });
+    setFormData({ role: safeJobRoles[index] });
     setEditingIndex(index);
     setShowAddModal(true);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (formData.role.trim()) {
-      const newJobRoles = [...jobRoles];
+      const newJobRoles = [...safeJobRoles];
       newJobRoles[editingIndex] = formData.role.trim();
-      setJobRoles(newJobRoles);
+
+      // Update local state
+      setProfileData(prev => ({
+        ...prev,
+        jobRoles: {
+          ...prev.jobRoles,
+          desiredJobRoles: newJobRoles
+        }
+      }));
+
+      // Save to backend
+      try {
+        await updateJobRoles({ desiredJobRoles: newJobRoles });
+        toast.success('Job role updated successfully!');
+      } catch (error) {
+        console.error('Error updating job role:', error);
+        toast.error('Failed to update job role');
+      }
+
       resetForm();
       setShowAddModal(false);
       setEditingIndex(null);
     }
   };
 
-  const handleDelete = (index) => {
-    setJobRoles(jobRoles.filter((_, i) => i !== index));
+  const handleDelete = async (index) => {
+    const newJobRoles = safeJobRoles.filter((_, i) => i !== index);
+
+    // Update local state
+    setProfileData(prev => ({
+      ...prev,
+      jobRoles: {
+        ...prev.jobRoles,
+        desiredJobRoles: newJobRoles
+      }
+    }));
+
+    // Save to backend
+    try {
+      await updateJobRoles({ desiredJobRoles: newJobRoles });
+      toast.success('Job role deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting job role:', error);
+      toast.error('Failed to delete job role');
+    }
   };
 
   return (
@@ -1226,7 +1575,7 @@ const JobRoles = () => {
         </div>
       </div>
 
-      {jobRoles.length === 0 ? (
+      {safeJobRoles.length === 0 ? (
         <div className={styles.emptyState}>
           <Briefcase className={styles.emptyStateIcon} />
           <p className={styles.emptyStateText}>No job roles specified</p>
@@ -1234,7 +1583,7 @@ const JobRoles = () => {
         </div>
       ) : (
         <div className={styles.jobRolesList}>
-          {jobRoles.map((role, index) => (
+          {safeJobRoles.map((role, index) => (
             <div key={index} className={styles.jobRoleItem}>
               <div className="flex items-center gap-3">
                 <span className={`${styles.badge} ${styles.badgeBlue}`}>#{index + 1}</span>
@@ -1268,7 +1617,7 @@ const JobRoles = () => {
               <h3 className={styles.modalTitle}>
                 {editingIndex !== null ? 'Edit Job Role' : 'Add New Job Role'}
               </h3>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingIndex(null);
@@ -1285,7 +1634,7 @@ const JobRoles = () => {
                 <input
                   type="text"
                   value={formData.role}
-                  onChange={(e) => setFormData({...formData, role: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className={styles.input}
                   placeholder="e.g., Senior React Developer, DevOps Engineer, Product Manager"
                   required
@@ -1308,20 +1657,64 @@ const JobRoles = () => {
 
 // Main ProfilePage.jsx Component
 const ProfilePage = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState({
+    basicDetails: null,
+    skills: null,
+    projects: null,
+    certifications: null,
+    experience: null,
+    jobRoles: null
+  });
+  const { user } = useAuth();
+
+  // Load profile data on component mount
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!user) return;
+
+      setIsLoading(true);
+      try {
+        const data = await getAllProfileData();
+        setProfileData(data);
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className={styles.profileContainer}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.profileContainer}>
       <div className={styles.header}>
         <h1 className={styles.title}>Professional Profile Dashboard</h1>
         <p className={styles.subtitle}>Manage your complete professional information in one place</p>
       </div>
-      
+
       <div className={styles.sectionsGrid}>
-        <Profile />
-        <Skills />
-        <Experience />
-        <Projects />
-        <Certificates />
-        <JobRoles />
+        <Profile profileData={profileData} setProfileData={setProfileData} />
+        <Skills profileData={profileData} setProfileData={setProfileData} />
+        <Experience profileData={profileData} setProfileData={setProfileData} />
+        <Projects profileData={profileData} setProfileData={setProfileData} />
+        <Certificates profileData={profileData} setProfileData={setProfileData} />
+        <JobRoles profileData={profileData} setProfileData={setProfileData} />
       </div>
     </div>
   );

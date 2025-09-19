@@ -18,6 +18,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import CertificateLibraryPage from './pages/CertificateLibraryPage';
 import ProfileCreationPage from './pages/ProfileCreation/ProfileCreationPage';
+import Profile from './pages/profile/Profile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireProfileCompletion = false }) => {
@@ -211,6 +212,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProfileCreationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute requireProfileCompletion={true}>
+                    <Profile />
                   </ProtectedRoute>
                 }
               />

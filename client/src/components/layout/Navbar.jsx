@@ -48,6 +48,7 @@ const Navbar = () => {
     const navLinks = [
         { path: '/dashboard', label: 'Dashboard', icon: Home },
         { path: '/certificates', label: 'Certificates', icon: Award },
+        { path: '/profile', label: 'Profile', icon: User },
     ];
 
     return (
