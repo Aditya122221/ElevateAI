@@ -69,6 +69,16 @@ export const updateBasicDetails = async (data) => {
     }
 };
 
+export const deleteProfilePicture = async () => {
+    try {
+        const response = await api.delete('/profile/basic-details/profile-picture');
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting profile picture:', error);
+        throw error;
+    }
+};
+
 // ==================== SKILLS ====================
 
 export const getSkills = async () => {

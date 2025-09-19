@@ -13,7 +13,7 @@ cloudinary.config({
 const profilePictureStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'elevate-ai/profile-pictures',
+        folder: 'Elevate AI/profile-pictures',
         allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         transformation: [
             { width: 400, height: 400, crop: 'fill', gravity: 'face' },
@@ -26,7 +26,7 @@ const profilePictureStorage = new CloudinaryStorage({
 const projectImageStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'elevate-ai/project-images',
+        folder: 'Elevate AI/project-images',
         allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         transformation: [
             { width: 800, height: 600, crop: 'fill' },
@@ -39,7 +39,7 @@ const projectImageStorage = new CloudinaryStorage({
 const certificateImageStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'elevate-ai/certificates',
+        folder: 'Elevate AI/certificates',
         allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
         transformation: [
             { width: 800, height: 600, crop: 'fill' },
@@ -94,7 +94,9 @@ const uploadCertificateImage = multer({
 // Helper function to delete image from Cloudinary
 const deleteImage = async (publicId) => {
     try {
+        console.log('Attempting to delete image with public ID:', publicId);
         const result = await cloudinary.uploader.destroy(publicId);
+        console.log('Cloudinary delete result:', result);
         return result;
     } catch (error) {
         console.error('Error deleting image from Cloudinary:', error);
@@ -102,14 +104,64 @@ const deleteImage = async (publicId) => {
     }
 };
 
+// Helper function to upload base64 image to Cloudinary
+const uploadBase64Image = async (base64Data, folder = 'Elevate AI/profile-pictures') => {
+    try {
+        const result = await cloudinary.uploader.upload(base64Data, {
+            folder: folder,
+            transformation: [
+                { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+                { quality: 'auto' }
+            ]
+        });
+        return result;
+    } catch (error) {
+        console.error('Error uploading base64 image to Cloudinary:', error);
+        throw error;
+    }
+};
+
 // Helper function to extract public ID from Cloudinary URL
 const extractPublicId = (url) => {
-    if (!url) return null;
-    const parts = url.split('/');
-    const filename = parts[parts.length - 1];
-    const publicId = filename.split('.')[0];
-    const folder = parts[parts.length - 2];
-    return `${folder}/${publicId}`;
+    if (!url || !url.includes('cloudinary.com')) return null;
+
+    try {
+        // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{public_id}.{format}
+        // or: https://res.cloudinary.com/{cloud_name}/image/upload/{public_id}.{format}
+        const urlParts = url.split('/');
+        const uploadIndex = urlParts.findIndex(part => part === 'upload');
+
+        if (uploadIndex === -1) return null;
+
+        // Get all parts after 'upload'
+        const afterUpload = urlParts.slice(uploadIndex + 1);
+
+        // Skip version number if present (starts with 'v' followed by digits)
+        let startIndex = 0;
+        if (afterUpload[0] && afterUpload[0].startsWith('v') && /^\d+$/.test(afterUpload[0].slice(1))) {
+            startIndex = 1;
+        }
+
+        // Join all remaining parts to get the full public ID with folder structure
+        const publicIdWithFormat = afterUpload.slice(startIndex).join('/');
+
+        if (!publicIdWithFormat) return null;
+
+        // Remove file extension to get public ID
+        const lastSlashIndex = publicIdWithFormat.lastIndexOf('/');
+        if (lastSlashIndex !== -1) {
+            const folderPath = publicIdWithFormat.substring(0, lastSlashIndex);
+            const filename = publicIdWithFormat.substring(lastSlashIndex + 1);
+            const publicId = filename.split('.')[0];
+            return `${folderPath}/${publicId}`;
+        } else {
+            // No folder structure, just filename
+            return publicIdWithFormat.split('.')[0];
+        }
+    } catch (error) {
+        console.error('Error extracting public ID from URL:', url, error);
+        return null;
+    }
 };
 
 module.exports = {
@@ -118,5 +170,6 @@ module.exports = {
     uploadProjectImage,
     uploadCertificateImage,
     deleteImage,
-    extractPublicId
+    extractPublicId,
+    uploadBase64Image
 };

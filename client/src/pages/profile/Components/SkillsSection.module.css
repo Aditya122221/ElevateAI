@@ -1,0 +1,286 @@
+.skillsSection {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionTitle {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.editButton {
+    background: #3b82f6;
+    color: white;
+}
+
+.editButton:hover {
+    background: #2563eb;
+}
+
+.saveButton {
+    background: #10b981;
+    color: white;
+}
+
+.saveButton:hover:not(:disabled) {
+    background: #059669;
+}
+
+.saveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancelButton {
+    background: #6b7280;
+    color: white;
+}
+
+.cancelButton:hover {
+    background: #4b5563;
+}
+
+.editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.skillCategory {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.categoryLabel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.input {
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+    width: 100%;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.inputBlue {
+    border-color: #3b82f6;
+}
+
+.inputBlue:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.inputGreen {
+    border-color: #10b981;
+}
+
+.inputGreen:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.inputPurple {
+    border-color: #8b5cf6;
+}
+
+.inputPurple:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.inputOrange {
+    border-color: #f59e0b;
+}
+
+.inputOrange:focus {
+    border-color: #d97706;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.inputPink {
+    border-color: #ec4899;
+}
+
+.inputPink:focus {
+    border-color: #db2777;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+}
+
+.formActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.skillsDisplay {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.categoryHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.categoryTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.iconBlue {
+    color: #3b82f6;
+}
+
+.iconGreen {
+    color: #10b981;
+}
+
+.iconPurple {
+    color: #8b5cf6;
+}
+
+.iconOrange {
+    color: #f59e0b;
+}
+
+.iconPink {
+    color: #ec4899;
+}
+
+.skillTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.skillTag {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tagBlue {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.tagBlue:hover {
+    background: #bfdbfe;
+    transform: translateY(-1px);
+}
+
+.tagGreen {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.tagGreen:hover {
+    background: #a7f3d0;
+    transform: translateY(-1px);
+}
+
+.tagPurple {
+    background: #ede9fe;
+    color: #5b21b6;
+    border: 1px solid #a78bfa;
+}
+
+.tagPurple:hover {
+    background: #ddd6fe;
+    transform: translateY(-1px);
+}
+
+.tagOrange {
+    background: #fed7aa;
+    color: #9a3412;
+    border: 1px solid #fdba74;
+}
+
+.tagOrange:hover {
+    background: #fed7aa;
+    transform: translateY(-1px);
+}
+
+.tagPink {
+    background: #fce7f3;
+    color: #be185d;
+    border: 1px solid #f9a8d4;
+}
+
+.tagPink:hover {
+    background: #fbcfe8;
+    transform: translateY(-1px);
+}
+
+.emptyState {
+    color: #9ca3af;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .formActions {
+        flex-direction: column;
+    }
+
+    .skillTags {
+        gap: 6px;
+    }
+
+    .skillTag {
+        font-size: 0.8rem;
+        padding: 4px 10px;
+    }
+}

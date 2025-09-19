@@ -42,16 +42,6 @@ const basicDetailsSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
-    twitter: {
-        type: String,
-        default: '',
-        trim: true
-    },
-    website: {
-        type: String,
-        default: '',
-        trim: true
-    },
     portfolio: {
         type: String,
         default: '',
@@ -65,5 +55,7 @@ const basicDetailsSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+//9696981153
 
 module.exports = mongoose.model('BasicDetails', basicDetailsSchema);

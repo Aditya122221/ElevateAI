@@ -7,7 +7,7 @@ const Experience = require('../models/Experience');
 const JobRoles = require('../models/JobRoles');
 const User = require('../models/User');
 const { validationResult } = require('express-validator');
-const { uploadProfilePicture, uploadProjectImage } = require('../services/cloudinaryService');
+const { uploadProfilePicture, uploadProjectImage, uploadBase64Image, deleteImage, extractPublicId } = require('../services/cloudinaryService');
 
 // ==================== BASIC DETAILS ====================
 
@@ -22,6 +22,34 @@ const saveBasicDetails = async (req, res) => {
 
         const basicDetailsData = req.body;
         basicDetailsData.user = req.user.id;
+
+        // Handle profile picture upload to Cloudinary
+        if (basicDetailsData.profilePicture && basicDetailsData.profilePicture.startsWith('data:image/')) {
+            try {
+                // Get existing basic details to check for old profile picture
+                const existingBasicDetails = await BasicDetails.findOne({ user: req.user.id });
+
+                // Delete old profile picture from Cloudinary if it exists
+                if (existingBasicDetails && existingBasicDetails.profilePicture &&
+                    existingBasicDetails.profilePicture.includes('cloudinary.com')) {
+                    console.log('Deleting old profile picture URL:', existingBasicDetails.profilePicture);
+                    const publicId = extractPublicId(existingBasicDetails.profilePicture);
+                    console.log('Extracted public ID for old image:', publicId);
+                    if (publicId) {
+                        await deleteImage(publicId);
+                    } else {
+                        console.log('No valid public ID extracted from old image URL');
+                    }
+                }
+
+                // Upload new profile picture to Cloudinary
+                const cloudinaryResult = await uploadBase64Image(basicDetailsData.profilePicture, 'Elevate AI/profile-pictures');
+                basicDetailsData.profilePicture = cloudinaryResult.secure_url;
+            } catch (cloudinaryError) {
+                console.error('Cloudinary upload error:', cloudinaryError);
+                return res.status(500).json({ message: 'Error uploading profile picture to cloud storage' });
+            }
+        }
 
         let basicDetails = await BasicDetails.findOne({ user: req.user.id });
 
@@ -56,6 +84,49 @@ const getBasicDetails = async (req, res) => {
     } catch (error) {
         console.error('Basic details fetch error:', error);
         res.status(500).json({ message: 'Server error while fetching basic details' });
+    }
+};
+
+// @desc    Delete profile picture
+// @access  Private
+const deleteProfilePicture = async (req, res) => {
+    try {
+        const basicDetails = await BasicDetails.findOne({ user: req.user.id });
+
+        if (!basicDetails || !basicDetails.profilePicture) {
+            return res.status(404).json({ message: 'No profile picture found' });
+        }
+
+        // Delete from Cloudinary if it's a Cloudinary URL
+        if (basicDetails.profilePicture.includes('cloudinary.com')) {
+            try {
+                console.log('Profile picture URL:', basicDetails.profilePicture);
+                const publicId = extractPublicId(basicDetails.profilePicture);
+                console.log('Extracted public ID:', publicId);
+                if (publicId) {
+                    await deleteImage(publicId);
+                } else {
+                    console.log('No valid public ID extracted from URL');
+                }
+            } catch (cloudinaryError) {
+                console.error('Error deleting from Cloudinary:', cloudinaryError);
+                // Continue with database update even if Cloudinary deletion fails
+            }
+        } else {
+            console.log('Profile picture is not a Cloudinary URL, skipping Cloudinary deletion');
+        }
+
+        // Update database to remove profile picture
+        basicDetails.profilePicture = '';
+        await basicDetails.save();
+
+        res.json({
+            message: 'Profile picture deleted successfully',
+            data: basicDetails
+        });
+    } catch (error) {
+        console.error('Profile picture delete error:', error);
+        res.status(500).json({ message: 'Server error while deleting profile picture' });
     }
 };
 
@@ -429,6 +500,7 @@ module.exports = {
     // Basic Details
     saveBasicDetails,
     getBasicDetails,
+    deleteProfilePicture,
 
     // Skills
     saveSkills,

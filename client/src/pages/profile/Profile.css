@@ -1,0 +1,51 @@
+/* Profile Layout Styles */
+.profile-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sidebar-navigation {
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.main-content {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+.content-transition {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Large screens - side by side layout */
+@media (min-width: 1024px) {
+    .profile-layout {
+        flex-direction: row;
+        gap: 32px;
+    }
+
+    .sidebar-navigation {
+        width: 320px;
+        flex-shrink: 0;
+    }
+
+    .main-content {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+/* Extra large screens - give more space to content */
+@media (min-width: 1280px) {
+    .sidebar-navigation {
+        width: 360px;
+    }
+
+    .main-content {
+        flex: 1;
+        max-width: none;
+    }
+}

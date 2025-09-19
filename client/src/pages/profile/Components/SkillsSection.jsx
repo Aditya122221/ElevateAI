@@ -1,257 +1,217 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import {
-    Code,
-    Plus,
-    X,
-    Save,
-    Edit,
-    Star,
-    CheckCircle
-} from 'lucide-react';
-import axios from 'axios';
+import { Plus, Edit, Save, X, Code, Wrench, Palette, Users, Brain } from 'lucide-react';
+import { saveSkills, updateSkills } from '../../../services/profileService';
 import toast from 'react-hot-toast';
-import styles from '../CSS/SkillsSection.module.css';
+import styles from './SkillsSection.module.css';
 
-const SkillsSection = ({ data, isEditing, onDataUpdate, onEditToggle }) => {
-    const [formData, setFormData] = useState({
-        languages: data?.languages || [],
-        technologies: data?.technologies || [],
-        frameworks: data?.frameworks || [],
-        tools: data?.tools || [],
-        softSkills: data?.softSkills || []
-    });
-    const [newSkill, setNewSkill] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('languages');
-    const [isLoading, setIsLoading] = useState(false);
+const SkillsSection = ({ profileData, setProfileData }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    languages: '',
+    technologies: '',
+    frameworks: '',
+    tools: '',
+    softSkills: ''
+  });
 
-    const skillCategories = [
-        { key: 'languages', label: 'Programming Languages', icon: Code, color: '#3B82F6' },
-        { key: 'technologies', label: 'Technologies', icon: Code, color: '#10B981' },
-        { key: 'frameworks', label: 'Frameworks & Libraries', icon: Code, color: '#F59E0B' },
-        { key: 'tools', label: 'Tools & Platforms', icon: Code, color: '#8B5CF6' },
-        { key: 'softSkills', label: 'Soft Skills', icon: Star, color: '#EC4899' }
-    ];
+  const skills = profileData.skills || {};
+  const safeSkills = {
+    languages: Array.isArray(skills.languages) ? skills.languages : [],
+    technologies: Array.isArray(skills.technologies) ? skills.technologies : [],
+    frameworks: Array.isArray(skills.frameworks) ? skills.frameworks : [],
+    tools: Array.isArray(skills.tools) ? skills.tools : [],
+    softSkills: Array.isArray(skills.softSkills) ? skills.softSkills : []
+  };
 
-    const handleAddSkill = () => {
-        if (!newSkill.trim()) return;
-
-        setFormData(prev => ({
-            ...prev,
-            [selectedCategory]: [...prev[selectedCategory], newSkill.trim()]
-        }));
-        setNewSkill('');
-    };
-
-    const handleRemoveSkill = (category, index) => {
-        setFormData(prev => ({
-            ...prev,
-            [category]: prev[category].filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleSave = async () => {
-        setIsLoading(true);
-        try {
-            await axios.post('/api/profile/skills', formData);
-            onDataUpdate(formData);
-            onEditToggle();
-            toast.success('Skills updated successfully!');
-        } catch (error) {
-            console.error('Save error:', error);
-            toast.error('Failed to save skills');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCancel = () => {
-        setFormData({
-            languages: data?.languages || [],
-            technologies: data?.technologies || [],
-            frameworks: data?.frameworks || [],
-            tools: data?.tools || [],
-            softSkills: data?.softSkills || []
-        });
-        onEditToggle();
-    };
-
-    const hasAnySkills = Object.values(formData).some(skills => skills.length > 0);
-
-    if (!data && !isEditing) {
-        return (
-            <div className={styles.emptyState}>
-                <Code size={48} className={styles.emptyIcon} />
-                <h3>No Skills Added</h3>
-                <p>Add your technical and soft skills to showcase your expertise</p>
-                <button onClick={onEditToggle} className={styles.addButton}>
-                    <Edit size={16} />
-                    Add Skills
-                </button>
-            </div>
-        );
+  const skillCategories = [
+    {
+      key: 'languages',
+      label: 'Programming Languages',
+      icon: Code,
+      color: 'blue',
+      placeholder: 'JavaScript, Python, Java, C++...'
+    },
+    {
+      key: 'technologies',
+      label: 'Technologies',
+      icon: Wrench,
+      color: 'green',
+      placeholder: 'React, Node.js, MongoDB, AWS...'
+    },
+    {
+      key: 'frameworks',
+      label: 'Frameworks & Libraries',
+      icon: Palette,
+      color: 'purple',
+      placeholder: 'Express, Django, Spring Boot...'
+    },
+    {
+      key: 'tools',
+      label: 'Tools & Platforms',
+      icon: Wrench,
+      color: 'orange',
+      placeholder: 'Git, Docker, Jenkins, Figma...'
+    },
+    {
+      key: 'softSkills',
+      label: 'Soft Skills',
+      icon: Users,
+      color: 'pink',
+      placeholder: 'Leadership, Communication, Problem Solving...'
     }
+  ];
 
-    return (
-        <div className={styles.skillsSection}>
-            {isEditing ? (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.editForm}
-                >
-                    <div className={styles.formHeader}>
-                        <h3>Edit Skills</h3>
-                        <div className={styles.formActions}>
-                            <button
-                                onClick={handleCancel}
-                                className={styles.cancelButton}
-                                disabled={isLoading}
-                            >
-                                <X size={16} />
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className={styles.saveButton}
-                                disabled={isLoading}
-                            >
-                                <Save size={16} />
-                                {isLoading ? 'Saving...' : 'Save Changes'}
-                            </button>
-                        </div>
-                    </div>
+  const handleEdit = () => {
+    setFormData({
+      languages: safeSkills.languages.join(', '),
+      technologies: safeSkills.technologies.join(', '),
+      frameworks: safeSkills.frameworks.join(', '),
+      tools: safeSkills.tools.join(', '),
+      softSkills: safeSkills.softSkills.join(', ')
+    });
+    setIsEditing(true);
+  };
 
-                    <div className={styles.formContent}>
-                        {/* Add New Skill */}
-                        <div className={styles.addSkillSection}>
-                            <h4>Add New Skill</h4>
-                            <div className={styles.addSkillForm}>
-                                <select
-                                    value={selectedCategory}
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className={styles.categorySelect}
-                                >
-                                    {skillCategories.map(category => (
-                                        <option key={category.key} value={category.key}>
-                                            {category.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="text"
-                                    value={newSkill}
-                                    onChange={(e) => setNewSkill(e.target.value)}
-                                    placeholder="Enter skill name"
-                                    className={styles.skillInput}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
-                                />
-                                <button
-                                    onClick={handleAddSkill}
-                                    className={styles.addButton}
-                                    disabled={!newSkill.trim()}
-                                >
-                                    <Plus size={16} />
-                                    Add
-                                </button>
-                            </div>
-                        </div>
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const updatedSkills = {
+        languages: formData.languages.split(',').map(s => s.trim()).filter(s => s),
+        technologies: formData.technologies.split(',').map(s => s.trim()).filter(s => s),
+        frameworks: formData.frameworks.split(',').map(s => s.trim()).filter(s => s),
+        tools: formData.tools.split(',').map(s => s.trim()).filter(s => s),
+        softSkills: formData.softSkills.split(',').map(s => s.trim()).filter(s => s)
+      };
 
-                        {/* Skills by Category */}
-                        <div className={styles.skillsGrid}>
-                            {skillCategories.map(category => {
-                                const Icon = category.icon;
-                                const skills = formData[category.key];
+      if (skills._id) {
+        await updateSkills(updatedSkills);
+      } else {
+        await saveSkills(updatedSkills);
+      }
 
-                                return (
-                                    <div key={category.key} className={styles.skillCategory}>
-                                        <div className={styles.categoryHeader}>
-                                            <div className={styles.categoryTitle}>
-                                                <Icon size={20} style={{ color: category.color }} />
-                                                <h4>{category.label}</h4>
-                                                <span className={styles.skillCount}>({skills.length})</span>
-                                            </div>
-                                        </div>
+      setProfileData(prev => ({
+        ...prev,
+        skills: updatedSkills
+      }));
 
-                                        <div className={styles.skillsList}>
-                                            {skills.length === 0 ? (
-                                                <p className={styles.noSkills}>No skills added yet</p>
-                                            ) : (
-                                                skills.map((skill, index) => (
-                                                    <div key={index} className={styles.skillItem}>
-                                                        <span className={styles.skillName}>{skill}</span>
-                                                        <button
-                                                            onClick={() => handleRemoveSkill(category.key, index)}
-                                                            className={styles.removeButton}
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </motion.div>
-            ) : (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={styles.viewMode}
-                >
-                    <div className={styles.skillsOverview}>
-                        <div className={styles.overviewHeader}>
-                            <h3>Skills Overview</h3>
-                            <div className={styles.totalSkills}>
-                                <CheckCircle size={20} />
-                                <span>{Object.values(formData).reduce((total, skills) => total + skills.length, 0)} Total Skills</span>
-                            </div>
-                        </div>
+      toast.success('Skills updated successfully!');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving skills:', error);
+      toast.error('Failed to save skills');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-                        <div className={styles.skillsGrid}>
-                            {skillCategories.map(category => {
-                                const Icon = category.icon;
-                                const skills = formData[category.key];
+  const handleCancel = () => {
+    setIsEditing(false);
+    setFormData({
+      languages: '',
+      technologies: '',
+      frameworks: '',
+      tools: '',
+      softSkills: ''
+    });
+  };
 
-                                if (skills.length === 0) return null;
+  const handleInputChange = (key, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
 
-                                return (
-                                    <div key={category.key} className={styles.skillCategory}>
-                                        <div className={styles.categoryHeader}>
-                                            <div className={styles.categoryTitle}>
-                                                <Icon size={20} style={{ color: category.color }} />
-                                                <h4>{category.label}</h4>
-                                                <span className={styles.skillCount}>({skills.length})</span>
-                                            </div>
-                                        </div>
+  return (
+    <div className={styles.skillsSection}>
+      <div className={styles.sectionHeader}>
+        <h3 className={styles.sectionTitle}>Skills & Expertise</h3>
+        {!isEditing && (
+          <button
+            onClick={handleEdit}
+            className={`${styles.button} ${styles.editButton}`}
+          >
+            <Edit className="w-4 h-4" />
+            Edit
+          </button>
+        )}
+      </div>
 
-                                        <div className={styles.skillsList}>
-                                            {skills.map((skill, index) => (
-                                                <div key={index} className={styles.skillTag}>
-                                                    {skill}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+      {isEditing ? (
+        <div className={styles.editForm}>
+          {skillCategories.map((category) => {
+            const IconComponent = category.icon;
+            return (
+              <div key={category.key} className={styles.skillCategory}>
+                <label className={styles.categoryLabel}>
+                  <IconComponent className="w-5 h-5" />
+                  {category.label}
+                </label>
+                <input
+                  type="text"
+                  value={formData[category.key]}
+                  onChange={(e) => handleInputChange(category.key, e.target.value)}
+                  className={`${styles.input} ${styles[`input${category.color.charAt(0).toUpperCase() + category.color.slice(1)}`]}`}
+                  placeholder={category.placeholder}
+                />
+              </div>
+            );
+          })}
 
-                        {!hasAnySkills && (
-                            <div className={styles.noSkillsMessage}>
-                                <Code size={32} />
-                                <p>No skills added yet</p>
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
-            )}
+          <div className={styles.formActions}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className={`${styles.button} ${styles.cancelButton}`}
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`${styles.button} ${styles.saveButton}`}
+            >
+              <Save className="w-4 h-4" />
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
         </div>
-    );
+      ) : (
+        <div className={styles.skillsDisplay}>
+          {skillCategories.map((category) => {
+            const IconComponent = category.icon;
+            const skillList = safeSkills[category.key];
+            
+            return (
+              <div key={category.key} className={styles.skillCategory}>
+                <div className={styles.categoryHeader}>
+                  <IconComponent className={`w-5 h-5 ${styles[`icon${category.color.charAt(0).toUpperCase() + category.color.slice(1)}`]}`} />
+                  <h4 className={styles.categoryTitle}>{category.label}</h4>
+                </div>
+                <div className={styles.skillTags}>
+                  {skillList.length === 0 ? (
+                    <span className={styles.emptyState}>No skills added yet</span>
+                  ) : (
+                    skillList.map((skill, index) => (
+                      <span
+                        key={index}
+                        className={`${styles.skillTag} ${styles[`tag${category.color.charAt(0).toUpperCase() + category.color.slice(1)}`]}`}
+                      >
+                        {skill}
+                      </span>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default SkillsSection;
-

@@ -5,6 +5,7 @@ const { uploadProfilePicture, uploadProjectImage } = require('../services/cloudi
 const {
     saveBasicDetails,
     getBasicDetails,
+    deleteProfilePicture,
     saveSkills,
     getSkills,
     saveProjects,
@@ -140,6 +141,11 @@ router.put('/basic-details', auth, [
     body('linkedin').trim().isLength({ min: 1 }).withMessage('LinkedIn profile is required'),
     body('github').trim().isLength({ min: 1 }).withMessage('GitHub profile is required')
 ], saveBasicDetails);
+
+// @route   DELETE /api/profile/basic-details/profile-picture
+// @desc    Delete profile picture
+// @access  Private
+router.delete('/basic-details/profile-picture', auth, deleteProfilePicture);
 
 // @route   POST /api/profile/skills
 // @desc    Save skills section
