@@ -138,14 +138,14 @@ const ProfileCreationPage = () => {
                     projects: projectsRes.status === 'fulfilled' && projectsRes.value.data.data ?
                         (projectsRes.value.data.data.projects || []).map(project => ({
                             ...project,
-                            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-                            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''
+                            startDate: project.startDate ? new Date(project.startDate).toISOString().substring(0, 7) : '',
+                            endDate: project.endDate ? new Date(project.endDate).toISOString().substring(0, 7) : ''
                         })) : [],
                     certifications: certificationsRes.status === 'fulfilled' && certificationsRes.value.data.data ?
                         (certificationsRes.value.data.data.certifications || []).map(cert => ({
                             ...cert,
-                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().split('T')[0] : '',
-                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().split('T')[0] : ''
+                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().substring(0, 7) : '',
+                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().substring(0, 7) : ''
                         })) : [],
                     experience: experienceRes.status === 'fulfilled' && experienceRes.value.data.data ?
                         (experienceRes.value.data.data.experiences || []).map(exp => ({
@@ -312,8 +312,8 @@ const ProfileCreationPage = () => {
                         // Format dates for projects
                         const formattedProjects = projects.map(project => ({
                             ...project,
-                            startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-                            endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''
+                            startDate: project.startDate ? new Date(project.startDate).toISOString().substring(0, 7) : '',
+                            endDate: project.endDate ? new Date(project.endDate).toISOString().substring(0, 7) : ''
                         }));
                         setValue('projects', formattedProjects);
                         break;
@@ -322,8 +322,8 @@ const ProfileCreationPage = () => {
                         // Format dates for certifications
                         const formattedCertifications = certifications.map(cert => ({
                             ...cert,
-                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().split('T')[0] : '',
-                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().split('T')[0] : ''
+                            startDate: cert.startDate ? new Date(cert.startDate).toISOString().substring(0, 7) : '',
+                            endDate: cert.endDate ? new Date(cert.endDate).toISOString().substring(0, 7) : ''
                         }));
                         setValue('certifications', formattedCertifications);
                         break;

@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Save, X, ExternalLink, Github, Calendar } from 'lucide-react';
-import { updateProjects } from '../../../services/profileService';
+import { Plus, Edit, Save, X, ExternalLink, Github, Calendar, Upload, Image as ImageIcon } from 'lucide-react';
+import { updateProjects, uploadProjectImage } from '../../../services/profileService';
 import toast from 'react-hot-toast';
 import styles from './ProjectsSection.module.css';
 
-// Utility function to format dates from YYYY-MM to MM-YYYY
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const [year, month] = dateString.split('-');
+// Utility function to format dates from Date object to MM-YYYY
+const formatDate = (date) => {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
     return `${month}-${year}`;
 };
 
-// Utility function to convert MM-YYYY to YYYY-MM for form inputs
-const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const [month, year] = dateString.split('-');
+// Utility function to convert Date object to YYYY-MM for form inputs
+const formatDateForInput = (date) => {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
 };
 
@@ -25,7 +29,6 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        technologies: '',
         githubLink: '',
         liveUrl: '',
         startDate: '',
@@ -33,6 +36,8 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
         skills: '',
         image: ''
     });
+    const [imagePreview, setImagePreview] = useState(null);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const projects = profileData.projects?.projects || [];
     const safeProjects = Array.isArray(projects) ? projects : [];
@@ -41,7 +46,6 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
         setFormData({
             name: '',
             description: '',
-            technologies: '',
             githubLink: '',
             liveUrl: '',
             startDate: '',
@@ -49,16 +53,61 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
             skills: '',
             image: ''
         });
+        setImagePreview(null);
         setEditingIndex(null);
+    };
+
+    const handleImageUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select a valid image file');
+            return;
+        }
+
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('Image size must be less than 10MB');
+            return;
+        }
+
+        setIsUploadingImage(true);
+        setImagePreview(URL.createObjectURL(file));
+
+        try {
+            const formData = new FormData();
+            formData.append('projectImage', file);
+
+            const response = await uploadProjectImage(formData);
+            setFormData(prev => ({ ...prev, image: response.imageUrl }));
+            toast.success('Image uploaded successfully!');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            toast.error('Failed to upload image');
+            setImagePreview(null);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const removeImage = () => {
+        setFormData(prev => ({ ...prev, image: '' }));
+        setImagePreview(null);
     };
 
     const handleAdd = async () => {
         const newProject = {
             id: Date.now(),
-            ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
-            skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+            name: formData.name,
+            details: [formData.description], // Convert description to details array
+            githubLink: formData.githubLink,
+            liveUrl: formData.liveUrl,
+            startDate: new Date(formData.startDate + '-01'), // Convert to Date object
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
+            skillsUsed: formData.skills.split(',').map(s => s.trim()).filter(s => s), // Map skills to skillsUsed
+            image: formData.image
         };
 
         const updatedProjects = [newProject, ...safeProjects];
@@ -88,11 +137,16 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
     const handleEdit = (index) => {
         const project = safeProjects[index];
         setFormData({
-            ...project,
-            startDate: formatDateForInput(project.startDate),
-            endDate: formatDateForInput(project.endDate),
-            skills: (project.skills || []).join(', ')
+            name: project.name,
+            description: project.details ? project.details[0] : '', // Convert details array to description string
+            githubLink: project.githubLink || '',
+            liveUrl: project.liveUrl || '',
+            startDate: project.startDate ? formatDateForInput(project.startDate) : '',
+            endDate: project.endDate ? formatDateForInput(project.endDate) : '',
+            skills: (project.skillsUsed || []).join(', '), // Convert skillsUsed array to comma-separated string
+            image: project.image || ''
         });
+        setImagePreview(project.image || null);
         setEditingIndex(index);
         setShowAddModal(true);
     };
@@ -100,10 +154,14 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
     const handleUpdate = async () => {
         const updatedProject = {
             ...safeProjects[editingIndex],
-            ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
-            skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+            name: formData.name,
+            details: [formData.description], // Convert description to details array
+            githubLink: formData.githubLink,
+            liveUrl: formData.liveUrl,
+            startDate: new Date(formData.startDate + '-01'), // Convert to Date object
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
+            skillsUsed: formData.skills.split(',').map(s => s.trim()).filter(s => s), // Map skills to skillsUsed
+            image: formData.image
         };
         const newProjects = [...safeProjects];
         newProjects[editingIndex] = updatedProject;
@@ -189,7 +247,7 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
 
                             <div className={styles.projectContent}>
                                 <h4 className={styles.projectTitle}>{project.name}</h4>
-                                <p className={styles.projectDescription}>{project.description}</p>
+                                <p className={styles.projectDescription}>{project.details ? project.details[0] : ''}</p>
 
                                 <div className={styles.projectLinks}>
                                     {project.githubLink && (
@@ -221,7 +279,7 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
                                 </div>
 
                                 <div className={styles.skillsList}>
-                                    {(project.skills || []).map((skill, skillIndex) => (
+                                    {(project.skillsUsed || []).map((skill, skillIndex) => (
                                         <span key={skillIndex} className={styles.skillTag}>{skill}</span>
                                     ))}
                                 </div>
@@ -287,16 +345,6 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
                                 />
                             </div>
 
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>Technologies Used</label>
-                                <input
-                                    type="text"
-                                    value={formData.technologies}
-                                    onChange={(e) => setFormData({ ...formData, technologies: e.target.value })}
-                                    className={styles.input}
-                                    placeholder="React, Node.js, MongoDB..."
-                                />
-                            </div>
 
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
@@ -354,14 +402,56 @@ const ProjectsSection = ({ profileData, setProfileData }) => {
                             </div>
 
                             <div className={styles.formGroup}>
-                                <label className={styles.label}>Project Image URL</label>
-                                <input
-                                    type="url"
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className={styles.input}
-                                    placeholder="https://example.com/project-image.jpg"
-                                />
+                                <label className={styles.label}>Project Image</label>
+
+                                {/* Image Preview */}
+                                {(imagePreview || formData.image) && (
+                                    <div className={styles.imagePreviewContainer}>
+                                        <img
+                                            src={imagePreview || formData.image}
+                                            alt="Project preview"
+                                            className={styles.imagePreview}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeImage}
+                                            className={styles.removeImageButton}
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Upload Button */}
+                                <div className={styles.uploadContainer}>
+                                    <input
+                                        type="file"
+                                        id="project-image-upload"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className={styles.fileInput}
+                                        disabled={isUploadingImage}
+                                    />
+                                    <label
+                                        htmlFor="project-image-upload"
+                                        className={`${styles.uploadButton} ${isUploadingImage ? styles.uploading : ''}`}
+                                    >
+                                        {isUploadingImage ? (
+                                            <>
+                                                <div className={styles.spinner}></div>
+                                                Uploading...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Upload className="w-4 h-4" />
+                                                {imagePreview || formData.image ? 'Change Image' : 'Upload Image'}
+                                            </>
+                                        )}
+                                    </label>
+                                    <p className={styles.uploadHint}>
+                                        Recommended: 800x600px, max 10MB. Supports JPG, PNG, GIF, WebP
+                                    </p>
+                                </div>
                             </div>
 
                             <button

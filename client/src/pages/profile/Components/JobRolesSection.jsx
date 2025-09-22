@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Save, X, Briefcase, MapPin, DollarSign } from 'lucide-react';
+import { Plus, Edit, Save, X, Briefcase } from 'lucide-react';
 import { updateJobRoles } from '../../../services/profileService';
 import toast from 'react-hot-toast';
 import styles from './JobRolesSection.module.css';
@@ -9,35 +9,15 @@ const JobRolesSection = ({ profileData, setProfileData }) => {
     const [editingIndex, setEditingIndex] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
-        title: '',
-        company: '',
-        location: '',
-        salary: '',
-        type: '',
-        description: ''
+        title: ''
     });
 
     const jobRoles = profileData.jobRoles?.desiredJobRoles || [];
     const safeJobRoles = Array.isArray(jobRoles) ? jobRoles : [];
 
-    const jobTypes = [
-        'Full-time',
-        'Part-time',
-        'Contract',
-        'Freelance',
-        'Internship',
-        'Remote',
-        'Hybrid'
-    ];
-
     const resetForm = () => {
         setFormData({
-            title: '',
-            company: '',
-            location: '',
-            salary: '',
-            type: '',
-            description: ''
+            title: ''
         });
         setEditingIndex(null);
     };
@@ -75,7 +55,7 @@ const JobRolesSection = ({ profileData, setProfileData }) => {
     const handleEdit = (index) => {
         const jobRole = safeJobRoles[index];
         setFormData({
-            ...jobRole
+            title: typeof jobRole === 'string' ? jobRole : jobRole.title
         });
         setEditingIndex(index);
         setShowAddModal(true);
@@ -161,30 +141,12 @@ const JobRolesSection = ({ profileData, setProfileData }) => {
                 <div className={styles.jobRolesList}>
                     {safeJobRoles.map((jobRole, index) => (
                         <div key={jobRole.id || index} className={styles.jobRoleCard}>
-                            <div className={styles.jobRoleHeader}>
+                            <div className={styles.jobRoleContent}>
                                 <div className={styles.jobRoleInfo}>
-                                    <h4 className={styles.jobRoleTitle}>{jobRole.title}</h4>
-                                    <p className={styles.jobRoleCompany}>{jobRole.company}</p>
-                                    <div className={styles.jobRoleDetails}>
-                                        {jobRole.location && (
-                                            <div className={styles.jobRoleDetail}>
-                                                <MapPin className="w-4 h-4" />
-                                                <span>{jobRole.location}</span>
-                                            </div>
-                                        )}
-                                        {jobRole.salary && (
-                                            <div className={styles.jobRoleDetail}>
-                                                <DollarSign className="w-4 h-4" />
-                                                <span>{jobRole.salary}</span>
-                                            </div>
-                                        )}
-                                        {jobRole.type && (
-                                            <div className={styles.jobRoleDetail}>
-                                                <Briefcase className="w-4 h-4" />
-                                                <span>{jobRole.type}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                    <Briefcase className="w-5 h-5 text-blue-500" />
+                                    <span className={styles.jobRoleTitle}>
+                                        {typeof jobRole === 'string' ? jobRole : jobRole.title}
+                                    </span>
                                 </div>
                                 <div className={styles.cardActions}>
                                     <button
@@ -203,9 +165,6 @@ const JobRolesSection = ({ profileData, setProfileData }) => {
                                     </button>
                                 </div>
                             </div>
-                            {jobRole.description && (
-                                <p className={styles.jobRoleDescription}>{jobRole.description}</p>
-                            )}
                         </div>
                     ))}
                 </div>
@@ -227,77 +186,15 @@ const JobRolesSection = ({ profileData, setProfileData }) => {
                         </div>
 
                         <form className={styles.form}>
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Job Title *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                        className={styles.input}
-                                        placeholder="e.g., Senior Frontend Developer"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Company</label>
-                                    <input
-                                        type="text"
-                                        value={formData.company}
-                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                        className={styles.input}
-                                        placeholder="e.g., Google, Microsoft"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Location</label>
-                                    <input
-                                        type="text"
-                                        value={formData.location}
-                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                        className={styles.input}
-                                        placeholder="e.g., San Francisco, CA"
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.label}>Salary Range</label>
-                                    <input
-                                        type="text"
-                                        value={formData.salary}
-                                        onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                                        className={styles.input}
-                                        placeholder="e.g., $80,000 - $120,000"
-                                    />
-                                </div>
-                            </div>
-
                             <div className={styles.formGroup}>
-                                <label className={styles.label}>Job Type</label>
-                                <select
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                <label className={styles.label}>Job Role *</label>
+                                <input
+                                    type="text"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className={styles.input}
-                                >
-                                    <option value="">Select job type</option>
-                                    {jobTypes.map((type) => (
-                                        <option key={type} value={type}>
-                                            {type}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>Description</label>
-                                <textarea
-                                    rows="3"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className={styles.textarea}
-                                    placeholder="Describe what you're looking for in this role..."
+                                    placeholder="e.g., Senior Frontend Developer, Product Manager, Data Scientist"
+                                    required
                                 />
                             </div>
 

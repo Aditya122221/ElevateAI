@@ -4,18 +4,13 @@ import { updateExperience } from '../../../services/profileService';
 import toast from 'react-hot-toast';
 import styles from './ExperienceSection.module.css';
 
-// Utility function to format dates from YYYY-MM to MM-YYYY
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const [year, month] = dateString.split('-');
+// Utility function to format dates from Date object to MM-YYYY
+const formatDate = (dateValue) => {
+    if (!dateValue) return '';
+    const date = new Date(dateValue);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     return `${month}-${year}`;
-};
-
-// Utility function to convert MM-YYYY to YYYY-MM for form inputs
-const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const [month, year] = dateString.split('-');
-    return `${year}-${month}`;
 };
 
 const ExperienceSection = ({ profileData, setProfileData }) => {
@@ -24,12 +19,13 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         position: '',
-        company: '',
-        location: '',
+        companyName: '',
         startDate: '',
         endDate: '',
+        isCurrent: false,
         description: '',
-        skills: ''
+        skills: '',
+        achievements: ''
     });
 
     const experiences = profileData.experience?.experiences || [];
@@ -38,12 +34,13 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
     const resetForm = () => {
         setFormData({
             position: '',
-            company: '',
-            location: '',
+            companyName: '',
             startDate: '',
             endDate: '',
+            isCurrent: false,
             description: '',
-            skills: ''
+            skills: '',
+            achievements: ''
         });
         setEditingIndex(null);
     };
@@ -52,9 +49,10 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
         const newExperience = {
             id: Date.now(),
             ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
-            skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+            startDate: new Date(formData.startDate + '-01'), // Convert YYYY-MM to Date
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
+            skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(s => s) : [],
+            achievements: formData.achievements ? formData.achievements.split(',').map(s => s.trim()).filter(s => s) : []
         };
 
         const updatedExperiences = [newExperience, ...safeExperiences];
@@ -85,9 +83,10 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
         const exp = safeExperiences[index];
         setFormData({
             ...exp,
-            startDate: formatDateForInput(exp.startDate),
-            endDate: formatDateForInput(exp.endDate),
-            skills: (exp.skills || []).join(', ')
+            startDate: exp.startDate ? new Date(exp.startDate).toISOString().slice(0, 7) : '', // Convert Date to YYYY-MM
+            endDate: exp.endDate ? new Date(exp.endDate).toISOString().slice(0, 7) : '',
+            skills: (exp.skills || []).join(', '),
+            achievements: (exp.achievements || []).join(', ')
         });
         setEditingIndex(index);
         setShowAddModal(true);
@@ -97,9 +96,10 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
         const updatedExperience = {
             ...safeExperiences[editingIndex],
             ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
-            skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
+            startDate: new Date(formData.startDate + '-01'), // Convert YYYY-MM to Date
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
+            skills: formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(s => s) : [],
+            achievements: formData.achievements ? formData.achievements.split(',').map(s => s.trim()).filter(s => s) : []
         };
         const newExperiences = [...safeExperiences];
         newExperiences[editingIndex] = updatedExperience;
@@ -179,17 +179,11 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
                             <div className={styles.experienceHeader}>
                                 <div>
                                     <h4 className={styles.experienceTitle}>{exp.position}</h4>
-                                    <p className={styles.experienceCompany}>{exp.company}</p>
-                                    {exp.location && (
-                                        <p className={styles.experienceLocation}>
-                                            <MapPin className="w-4 h-4" />
-                                            {exp.location}
-                                        </p>
-                                    )}
+                                    <p className={styles.experienceCompany}>{exp.companyName}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
                                     <span className={styles.experienceDuration}>
-                                        {formatDate(exp.startDate)} - {exp.endDate ? formatDate(exp.endDate) : 'Present'}
+                                        {formatDate(exp.startDate)} - {exp.isCurrent || !exp.endDate ? 'Present' : formatDate(exp.endDate)}
                                     </span>
                                     <div className="flex gap-2">
                                         <button
@@ -209,12 +203,29 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
                                     </div>
                                 </div>
                             </div>
-                            <p className={styles.experienceDescription}>{exp.description}</p>
-                            <div className={styles.skillsList}>
-                                {(exp.skills || []).map((skill, skillIndex) => (
-                                    <span key={skillIndex} className={styles.skillTag}>{skill}</span>
-                                ))}
-                            </div>
+                            {exp.description && (
+                                <p className={styles.experienceDescription}>{exp.description}</p>
+                            )}
+
+                            {exp.skills && Array.isArray(exp.skills) && exp.skills.length > 0 && (
+                                <div className={styles.skillsList}>
+                                    <strong>Skills:</strong>
+                                    {exp.skills.map((skill, skillIndex) => (
+                                        <span key={skillIndex} className={styles.skillTag}>{skill}</span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {exp.achievements && Array.isArray(exp.achievements) && exp.achievements.length > 0 && (
+                                <div className={styles.achievementsList}>
+                                    <strong>Achievements:</strong>
+                                    <ul className={styles.achievementsUl}>
+                                        {exp.achievements.map((achievement, achievementIndex) => (
+                                            <li key={achievementIndex} className={styles.achievementItem}>{achievement}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -251,23 +262,12 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
                                     <label className={styles.label}>Company *</label>
                                     <input
                                         type="text"
-                                        value={formData.company}
-                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                        value={formData.companyName}
+                                        onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                                         className={styles.input}
                                         required
                                     />
                                 </div>
-                            </div>
-
-                            <div className={styles.formGroup}>
-                                <label className={styles.label}>Location</label>
-                                <input
-                                    type="text"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className={styles.input}
-                                    placeholder="City, Country"
-                                />
                             </div>
 
                             <div className={styles.formRow}>
@@ -288,9 +288,28 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
                                         value={formData.endDate}
                                         onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                                         className={styles.input}
-                                        placeholder="Leave empty if current position"
+                                        disabled={formData.isCurrent}
+                                        placeholder={formData.isCurrent ? "Current position" : "Leave empty if current position"}
                                     />
                                 </div>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.checkboxLabel}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.isCurrent}
+                                        onChange={(e) => {
+                                            setFormData({
+                                                ...formData,
+                                                isCurrent: e.target.checked,
+                                                endDate: e.target.checked ? '' : formData.endDate
+                                            });
+                                        }}
+                                        className={styles.checkbox}
+                                    />
+                                    <span>This is my current position</span>
+                                </label>
                             </div>
 
                             <div className={styles.formGroup}>
@@ -301,6 +320,17 @@ const ExperienceSection = ({ profileData, setProfileData }) => {
                                     onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
                                     className={styles.input}
                                     placeholder="Enter skills separated by commas"
+                                />
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Key Achievements</label>
+                                <input
+                                    type="text"
+                                    value={formData.achievements}
+                                    onChange={(e) => setFormData({ ...formData, achievements: e.target.value })}
+                                    className={styles.input}
+                                    placeholder="Enter achievements separated by commas"
                                 />
                             </div>
 

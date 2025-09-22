@@ -213,7 +213,7 @@ const CertificationsStep = ({
                                             {...register(`certifications.${index}.startDate`, {
                                                 required: 'Start date is required'
                                             })}
-                                            type="date"
+                                            type="month"
                                             className={styles.enhancedFormInput}
                                             onFocus={() => handleInputFocus(`cert-${index}-startDate`)}
                                             onBlur={() => handleInputBlur(`cert-${index}-startDate`)}
@@ -232,7 +232,7 @@ const CertificationsStep = ({
                                     <div className={styles.inputWrapper}>
                                         <input
                                             {...register(`certifications.${index}.endDate`)}
-                                            type="date"
+                                            type="month"
                                             className={styles.enhancedFormInput}
                                             onFocus={() => handleInputFocus(`cert-${index}-endDate`)}
                                             onBlur={() => handleInputBlur(`cert-${index}-endDate`)}

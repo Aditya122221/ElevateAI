@@ -4,17 +4,21 @@ import { updateCertifications } from '../../../services/profileService';
 import toast from 'react-hot-toast';
 import styles from './CertificatesSection.module.css';
 
-// Utility function to format dates from YYYY-MM to MM-YYYY
-const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const [year, month] = dateString.split('-');
+// Utility function to format dates from Date object to MM-YYYY
+const formatDate = (date) => {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const year = dateObj.getFullYear();
     return `${month}-${year}`;
 };
 
-// Utility function to convert MM-YYYY to YYYY-MM for form inputs
-const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const [month, year] = dateString.split('-');
+// Utility function to convert Date object to YYYY-MM for form inputs
+const formatDateForInput = (date) => {
+    if (!date) return '';
+    const dateObj = new Date(date);
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
 };
 
@@ -47,9 +51,10 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
     const handleAdd = async () => {
         const newCertificate = {
             id: Date.now(),
-            ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
+            name: formData.name,
+            platform: formData.platform,
+            startDate: new Date(formData.startDate + '-01'), // Convert to Date object
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
             skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
         };
 
@@ -80,9 +85,10 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
     const handleEdit = (index) => {
         const certificate = safeCertificates[index];
         setFormData({
-            ...certificate,
-            startDate: formatDateForInput(certificate.startDate),
-            endDate: formatDateForInput(certificate.endDate),
+            name: certificate.name || '',
+            platform: certificate.platform || '',
+            startDate: certificate.startDate ? formatDateForInput(certificate.startDate) : '',
+            endDate: certificate.endDate ? formatDateForInput(certificate.endDate) : '',
             skills: (certificate.skills || []).join(', ')
         });
         setEditingIndex(index);
@@ -92,9 +98,10 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
     const handleUpdate = async () => {
         const updatedCertificate = {
             ...safeCertificates[editingIndex],
-            ...formData,
-            startDate: formatDate(formData.startDate),
-            endDate: formData.endDate ? formatDate(formData.endDate) : '',
+            name: formData.name,
+            platform: formData.platform,
+            startDate: new Date(formData.startDate + '-01'), // Convert to Date object
+            endDate: formData.endDate ? new Date(formData.endDate + '-01') : null,
             skills: formData.skills.split(',').map(s => s.trim()).filter(s => s)
         };
         const newCertificates = [...safeCertificates];

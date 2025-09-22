@@ -56,6 +56,4 @@ const basicDetailsSchema = new mongoose.Schema({
     timestamps: true
 });
 
-//9696981153
-
 module.exports = mongoose.model('BasicDetails', basicDetailsSchema);

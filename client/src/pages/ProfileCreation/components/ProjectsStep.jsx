@@ -209,7 +209,7 @@ const ProjectsStep = ({
                                             {...register(`projects.${index}.startDate`, {
                                                 required: 'Start date is required'
                                             })}
-                                            type="date"
+                                            type="month"
                                             className={styles.enhancedFormInput}
                                             onFocus={() => handleInputFocus(`project-${index}-startDate`)}
                                             onBlur={() => handleInputBlur(`project-${index}-startDate`)}
@@ -228,7 +228,7 @@ const ProjectsStep = ({
                                     <div className={styles.inputWrapper}>
                                         <input
                                             {...register(`projects.${index}.endDate`)}
-                                            type="date"
+                                            type="month"
                                             className={styles.enhancedFormInput}
                                             onFocus={() => handleInputFocus(`project-${index}-endDate`)}
                                             onBlur={() => handleInputBlur(`project-${index}-endDate`)}
