@@ -18,7 +18,8 @@ import logo from '../../assets/logo.png';
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
-    const [isOpen, setIsOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const { user, logout, isAuthenticated } = useAuth();
     const { theme, toggleTheme } = useTheme();
@@ -35,10 +36,28 @@ const Navbar = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Close mobile menu when route changes
+    // Close menus when route changes
     useEffect(() => {
-        setIsOpen(false);
+        setIsMobileMenuOpen(false);
+        setIsUserMenuOpen(false);
     }, [location]);
+
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (isUserMenuOpen && !event.target.closest(`.${styles.userMenu}`)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+
+        if (isUserMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isUserMenuOpen]);
 
     const handleLogout = async () => {
         await logout();
@@ -102,37 +121,26 @@ const Navbar = () => {
                             <div className={styles.userMenu}>
                                 <button
                                     className={styles.userMenuButton}
-                                    onClick={() => setIsOpen(!isOpen)}
+                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                                 >
                                     <User size={20} />
                                     <span className="hidden sm:block">{user?.name}</span>
                                 </button>
 
                                 <AnimatePresence>
-                                    {isOpen && (
+                                    {isUserMenuOpen && (
                                         <motion.div
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -10 }}
                                             className={styles.userMenuDropdown}
                                         >
-                                            <Link
-                                                to="/profile"
-                                                className={styles.userMenuLink}
-                                            >
-                                                <User size={16} />
-                                                Profile
-                                            </Link>
-                                            <Link
-                                                to="/settings"
-                                                className={styles.userMenuLink}
-                                            >
-                                                <Settings size={16} />
-                                                Settings
-                                            </Link>
                                             <div className={styles.userMenuDivider} />
                                             <button
-                                                onClick={handleLogout}
+                                                onClick={() => {
+                                                    setIsUserMenuOpen(false);
+                                                    handleLogout();
+                                                }}
                                                 className={`${styles.userMenuButton} ${styles.logout}`}
                                             >
                                                 <LogOut size={16} />
@@ -156,23 +164,23 @@ const Navbar = () => {
 
                     {/* Mobile Menu Button */}
                     <button
-                        onClick={() => setIsOpen(!isOpen)}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className={styles.mobileMenuButton}
                         aria-label="Toggle menu"
                     >
-                        {isOpen ? <X size={20} /> : <Menu size={20} />}
+                        {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                 </div>
             </div>
 
             {/* Mobile Menu */}
             <AnimatePresence>
-                {isOpen && isAuthenticated && (
+                {isMobileMenuOpen && isAuthenticated && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className={`${styles.mobileMenu} ${isOpen ? styles.open : ''}`}
+                        className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}
                     >
                         {navLinks.map((link) => {
                             const Icon = link.icon;
@@ -183,6 +191,7 @@ const Navbar = () => {
                                     key={link.path}
                                     to={link.path}
                                     className={`${styles.mobileMenuLink} ${isActive ? styles.active : ''}`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                     <Icon size={18} />
                                     <span>{link.label}</span>
