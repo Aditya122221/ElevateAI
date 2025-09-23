@@ -301,23 +301,50 @@
 
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
-    .navbar {
-        background: rgba(15, 23, 42, 0.95);
-        border-bottom-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .navbar {
+    background: rgba(15, 23, 42, 0.95);
+    border-bottom-color: var(--border-color);
+}
 
-    .navbar.scrolled {
-        background: rgba(15, 23, 42, 0.98);
-    }
+:global([data-theme="dark"]) .navbar.scrolled {
+    background: rgba(15, 23, 42, 0.98);
+    box-shadow: var(--shadow-md);
+}
 
-    .userMenuDropdown {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .userMenuDropdown {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
 
-    .mobileMenu {
-        background: var(--gray-800);
-        border-top-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .userMenuLink {
+    color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .userMenuLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+:global([data-theme="dark"]) .userMenuDivider {
+    background: var(--border-color);
+}
+
+:global([data-theme="dark"]) .mobileMenu {
+    background: var(--bg-card);
+    border-top-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .mobileMenuLink {
+    color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .mobileMenuLink:hover {
+    background: var(--bg-tertiary);
+    color: var(--primary);
+}
+
+:global([data-theme="dark"]) .mobileMenuLink.active {
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
 }

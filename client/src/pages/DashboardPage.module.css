@@ -1127,63 +1127,175 @@
 }
 
 /* Dark Mode */
-@media (prefers-color-scheme: dark) {
-    .dashboardPage {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    }
+:global([data-theme="dark"]) .dashboardPage {
+    background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+}
 
-    .dashboardSection {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .welcomeSection {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+}
 
-    .recommendationCard {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .welcomeSection::before {
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+}
 
-    .recommendationCard:hover {
-        background: var(--gray-700);
-    }
+:global([data-theme="dark"]) .card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
 
-    .activityItem {
-        background: var(--gray-800);
-    }
+:global([data-theme="dark"]) .cardTitle {
+    color: var(--text-primary);
+}
 
-    .activityItem:hover {
-        background: var(--gray-700);
-    }
+:global([data-theme="dark"]) .cardDescription {
+    color: var(--text-secondary);
+}
 
-    .actionCard {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .statCard {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
 
-    .actionCard:hover {
-        background: var(--gray-700);
-    }
+:global([data-theme="dark"]) .statValue {
+    color: var(--text-primary);
+}
 
-    .emptyIcon {
-        background: var(--gray-800);
-    }
+:global([data-theme="dark"]) .statLabel {
+    color: var(--text-secondary);
+}
 
-    .careerStep {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .progressCard {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
 
-    .skillCard {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .progressTitle {
+    color: var(--text-primary);
+}
 
-    .simulationCard {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .progressDescription {
+    color: var(--text-secondary);
+}
 
-    .simulationModal {
-        background: var(--gray-800);
-        border-color: var(--gray-700);
-    }
+:global([data-theme="dark"]) .tabButton {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .tabButton:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+:global([data-theme="dark"]) .tabActive {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+:global([data-theme="dark"]) .skillCard {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .skillCard:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+}
+
+:global([data-theme="dark"]) .skillName {
+    color: var(--text-primary);
+}
+
+:global([data-theme="dark"]) .skillLevel {
+    color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .recommendationCard {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .recommendationTitle {
+    color: var(--text-primary);
+}
+
+:global([data-theme="dark"]) .recommendationDescription {
+    color: var(--text-secondary);
+}
+
+:global([data-theme="dark"]) .alert {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+:global([data-theme="dark"]) .alertError {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+:global([data-theme="dark"]) .alertWarning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+:global([data-theme="dark"]) .alertSuccess {
+    background: rgba(16, 185, 129, 0.1);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+:global([data-theme="dark"]) .dashboardSection {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+.recommendationCard:hover {
+    background: var(--gray-700);
+}
+
+.activityItem {
+    background: var(--gray-800);
+}
+
+.activityItem:hover {
+    background: var(--gray-700);
+}
+
+.actionCard {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.actionCard:hover {
+    background: var(--gray-700);
+}
+
+.emptyIcon {
+    background: var(--gray-800);
+}
+
+.careerStep {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.skillCard {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.simulationCard {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+}
+
+.simulationModal {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
 }

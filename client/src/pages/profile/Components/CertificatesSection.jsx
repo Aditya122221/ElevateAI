@@ -188,7 +188,7 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
                             </div>
 
                             <div className={styles.certificateDuration}>
-                                Issued: {formatDate(cert.startDate)} | Expires: {cert.endDate ? formatDate(cert.endDate) : 'Lifetime'}
+                                Start Date: {formatDate(cert.startDate)} | End Date: {cert.endDate ? formatDate(cert.endDate) : 'Lifetime'}
                             </div>
 
                             <div className={styles.skillsList}>
@@ -260,7 +260,7 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
 
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Issue Date</label>
+                                    <label className={styles.label}>Start Date</label>
                                     <input
                                         type="month"
                                         value={formData.startDate}
@@ -269,7 +269,7 @@ const CertificatesSection = ({ profileData, setProfileData }) => {
                                     />
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.label}>Expiration Date</label>
+                                    <label className={styles.label}>End Date</label>
                                     <input
                                         type="month"
                                         value={formData.endDate}
