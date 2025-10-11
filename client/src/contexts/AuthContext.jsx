@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../config/api';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:5000';
+axios.defaults.baseURL = API_BASE_URL + '/';
 
 const AuthContext = createContext();
 
@@ -56,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await axios.post('/api/auth/login', { email, password });
+            const response = await axios.post('/api/auth/login/', { email, password });
             const { token: newToken, user: userData } = response.data;
 
             console.log('Login response user data:', userData);
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password) => {
         try {
-            const response = await axios.post('/api/auth/register', { name, email, password });
+            const response = await axios.post('/api/auth/register/', { name, email, password });
             const { token: newToken, user: userData, requiresVerification, email: responseEmail } = response.data;
 
             // If email verification is required, don't set user as logged in yet
@@ -108,7 +109,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await axios.post('/api/auth/logout');
+            await axios.post('/api/auth/logout/');
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
@@ -121,7 +122,7 @@ export const AuthProvider = ({ children }) => {
 
     const forgotPassword = async (email) => {
         try {
-            const response = await axios.post('/api/auth/forgot-password', { email });
+            const response = await axios.post('/api/auth/forgot-password/', { email });
             toast.success(response.data.message);
             return { success: true, message: response.data.message };
         } catch (error) {
@@ -133,7 +134,7 @@ export const AuthProvider = ({ children }) => {
 
     const resetPassword = async (token, password) => {
         try {
-            const response = await axios.post(`/api/auth/reset-password/${token}`, { password });
+            const response = await axios.post(`/api/auth/reset-password/${token}/`, { password });
             toast.success(response.data.message);
             return { success: true, message: response.data.message };
         } catch (error) {

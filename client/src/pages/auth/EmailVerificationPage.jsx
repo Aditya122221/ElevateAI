@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../config/api';
 import styles from './EmailVerificationPage.module.css';
 
 const EmailVerificationPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [resendLoading, setResendLoading] = useState(false);
@@ -19,18 +21,35 @@ const EmailVerificationPage = () => {
     const token = searchParams.get('token');
 
     useEffect(() => {
+        console.log('🔍 EmailVerificationPage useEffect triggered');
+        console.log('📧 Token:', token);
+        console.log('📍 Location state:', location.state);
+
+        // Check if user was redirected from registration (has state data)
+        if (location.state?.email) {
+            console.log('✅ User redirected from registration');
+            setEmail(location.state.email);
+            setStatus('pending');
+            setMessage(location.state.message || 'Please check your email and click the verification link.');
+            return;
+        }
+
+        // Check if there's a token in URL (user clicked email link)
         if (token) {
+            console.log('🔗 Token found, verifying email...');
             verifyEmail(token);
         } else {
+            console.log('❌ No token and no state - invalid access');
+            // No token and no state - invalid access
             setStatus('error');
             setMessage('Invalid verification link. Please check your email for the correct link.');
         }
-    }, [token]);
+    }, [token, location.state]);
 
     const verifyEmail = async (verificationToken) => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/api/auth/verify-email', {
+            const response = await fetch(`${API_URL}/auth/verify-email/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -77,7 +96,7 @@ const EmailVerificationPage = () => {
 
         setResendLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/api/auth/resend-verification', {
+            const response = await fetch(`${API_URL}/auth/resend-verification/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -131,7 +150,7 @@ const EmailVerificationPage = () => {
                     <h1 className={styles.title}>
                         {status === 'success' && 'Email Verified!'}
                         {status === 'error' && 'Verification Failed'}
-                        {status === 'pending' && 'Verifying Email...'}
+                        {status === 'pending' && (token ? 'Verifying Email...' : 'Check Your Email')}
                     </h1>
                 </div>
 

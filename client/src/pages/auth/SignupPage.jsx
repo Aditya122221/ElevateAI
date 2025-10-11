@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import logo from '../../assets/logo.png';
+import { API_URL } from '../../config/api';
 import SP from './SignupPage.module.css';
 
 const SignupPage = () => {
@@ -82,22 +83,32 @@ const SignupPage = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('/api/auth/register', {
+            const requestData = {
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password
+            };
+
+            console.log('📤 Sending registration data:', requestData);
+            console.log('📤 API URL:', `${API_URL}/auth/register/`);
+
+            const response = await fetch(`${API_URL}/auth/register/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    name: formData.fullName,
-                    email: formData.email,
-                    password: formData.password
-                })
+                body: JSON.stringify(requestData)
             });
 
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+
             const data = await response.json();
+            console.log('📥 Response data:', data);
 
             if (response.ok) {
                 // Registration successful, redirect to email verification page
+                console.log('✅ Registration successful!');
                 navigate('/verify-email', {
                     state: {
                         email: formData.email,
@@ -106,16 +117,16 @@ const SignupPage = () => {
                 });
             } else {
                 // Handle registration errors
-                if (data.errors && Array.isArray(data.errors)) {
-                    const newErrors = {};
-                    data.errors.forEach(error => {
-                        if (error.path === 'name') newErrors.fullName = error.msg;
-                        if (error.path === 'email') newErrors.email = error.msg;
-                        if (error.path === 'password') newErrors.password = error.msg;
-                    });
-                    setErrors(newErrors);
+                console.log('❌ Registration failed:', data);
+                if (data.errors) {
+                    console.log('📝 Setting form errors:', data.errors);
+                    setErrors(data.errors);
+                } else if (data.message) {
+                    console.log('📝 Showing error message:', data.message);
+                    setErrors({ general: data.message });
                 } else {
-                    setErrors({ general: data.message || 'Registration failed. Please try again.' });
+                    console.log('📝 Showing generic error');
+                    setErrors({ general: 'Registration failed. Please try again.' });
                 }
             }
         } catch (error) {
